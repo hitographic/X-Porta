@@ -46,7 +46,7 @@ export default function Login() {
   return (
     <div style={styles.container}>
       <div style={styles.brand}>
-        <div style={styles.kicker}>X-PORTA</div>
+        <img src="/logo.png" alt="X-Porta Logo" style={{ width: 120, height: 'auto', marginBottom: 12 }} />
         <div style={styles.title}>Finished Goods QC</div>
         <div style={styles.subtitle}>Masuk ke workspace laporan</div>
       </div>
@@ -129,12 +129,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   brand: {
     marginBottom: 28,
-  },
-  kicker: {
-    color: COLORS.green,
-    fontSize: 12,
-    fontWeight: 800,
-    letterSpacing: 1.6,
   },
   title: {
     color: COLORS.ink,

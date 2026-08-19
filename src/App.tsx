@@ -27,11 +27,13 @@ function App() {
   return (
     <div className="safe-area">
       <header className="header">
-        <div>
-          <div className="kicker">X-PORTA</div>
-          <div className="title">Finished Goods QC</div>
-          <div className="subtitle">
-            PDQC-020 · {session ? 'WebApp Dashboard' : 'Login'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src="/logo.png" alt="X-Porta" style={{ height: 32, width: 'auto' }} />
+          <div>
+            <div className="title">Finished Goods QC</div>
+            <div className="subtitle">
+              PDQC-020 · {session ? 'WebApp Dashboard' : 'Login'}
+            </div>
           </div>
         </div>
         {session && (

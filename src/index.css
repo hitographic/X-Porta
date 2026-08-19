@@ -42,13 +42,6 @@ body {
   align-items: center;
 }
 
-.kicker {
-  color: var(--color-green);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-}
-
 .title {
   color: var(--color-ink);
   font-size: 26px;

@@ -92,9 +92,11 @@ export default function SyncSettings() {
         <button type="button" onClick={() => navigate('/')} style={styles.iconButton} aria-label="Kembali">
           <ArrowLeft size={21} />
         </button>
-        <div style={{ flex: 1 }}>
-          <div style={styles.kicker}>X-PORTA</div>
-          <div style={styles.title}>Sinkronisasi data</div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src="/logo.png" alt="X-Porta" style={{ height: 28, width: 'auto' }} />
+          <div>
+            <div style={styles.title}>Sinkronisasi data</div>
+          </div>
         </div>
         <div style={styles.iconButton}><Link2 size={19} color={COLORS.green} /></div>
       </div>
@@ -163,12 +165,6 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     cursor: 'pointer',
     color: COLORS.ink,
-  },
-  kicker: {
-    color: COLORS.green,
-    fontSize: 11,
-    fontWeight: 800,
-    letterSpacing: 1.4,
   },
   title: {
     color: COLORS.ink,
