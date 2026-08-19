@@ -1,8 +1,9 @@
 import type { FinishedGoodsReport, ReportAttachment, SyncEnvelope } from '../types/report';
-import { savePhotos, getAllPhotos } from '../utils/photoStorage';
+import { savePhotos } from '../utils/photoStorage';
 
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxyhnub36943ZHN8O1i2YE3_qChD6EvllAjnPbCGgB3waNJhYxF4Zn6LUQFz30bxUC98w/exec';
 const ACCESS_TOKEN = 'Lea4rnt0l1sten';
+const REQUEST_TIMEOUT = 30000;
 
 export interface AuthSession {
     nik: string;
@@ -37,36 +38,44 @@ function stripDataUrl(attachment: ReportAttachment): ReportAttachment {
     };
 }
 
+function mergePhotosFromDrive(report: FinishedGoodsReport): FinishedGoodsReport {
+    const attachments = report.attachments ?? [];
+    const merged = attachments.map(att => {
+        if (att.driveUrl && !att.dataUrl) {
+            return { ...att, dataUrl: att.driveUrl };
+        }
+        return att;
+    });
+    return { ...report, attachments: merged };
+}
+
 export const apiService = {
     async fetchReports(): Promise<FinishedGoodsReport[]> {
-        const response = await fetch(getEndpoint('download'), { method: 'GET' });
-        if (!response.ok) throw new Error(`Gagal mengambil data: HTTP ${response.status}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-        const data: SyncEnvelope = await response.json();
-        if (data.schemaVersion !== 1 || !Array.isArray(data.reports)) {
-            throw new Error('Format data dari server tidak didukung.');
-        }
-
-        const reports = data.reports;
-        const photosMap = await getAllPhotos();
-
-        return reports.map(report => {
-            const serverAttachments = report.attachments ?? [];
-            const localPhotos = photosMap.get(report.id) ?? [];
-
-            const mergedAttachments = serverAttachments.map(serverAtt => {
-                const localAtt = localPhotos.find(l => l.id === serverAtt.id);
-                if (serverAtt.driveUrl) {
-                    return { ...serverAtt, dataUrl: serverAtt.driveUrl };
-                }
-                if (localAtt?.dataUrl) {
-                    return { ...serverAtt, dataUrl: localAtt.dataUrl };
-                }
-                return serverAtt;
+        try {
+            const response = await fetch(getEndpoint('download'), {
+                method: 'GET',
+                signal: controller.signal,
             });
+            clearTimeout(timeout);
 
-            return { ...report, attachments: mergedAttachments };
-        });
+            if (!response.ok) throw new Error(`Gagal mengambil data: HTTP ${response.status}`);
+
+            const data: SyncEnvelope = await response.json();
+            if (data.schemaVersion !== 1 || !Array.isArray(data.reports)) {
+                throw new Error('Format data dari server tidak didukung.');
+            }
+
+            return data.reports.map(mergePhotosFromDrive);
+        } catch (err) {
+            clearTimeout(timeout);
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                throw new Error('Request timeout. Periksa koneksi internet dan coba lagi.');
+            }
+            throw err;
+        }
     },
 
     async uploadReports(reports: FinishedGoodsReport[]): Promise<string[]> {
@@ -102,32 +111,45 @@ export const apiService = {
             attachmentUploads,
         };
 
-        const response = await fetch(getEndpoint('upload'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload),
-        });
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-        const text = await response.text();
-        let result: { ok?: boolean; acceptedIds?: string[]; reports?: FinishedGoodsReport[]; error?: string };
         try {
-            result = JSON.parse(text);
-        } catch {
-            throw new Error('Respons server bukan JSON yang valid.');
-        }
+            const response = await fetch(getEndpoint('upload'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
 
-        const legacyDriveError = /getFolderById|DriveApp/i.test(result.error || '');
-        if (!result.ok && !legacyDriveError) throw new Error(result.error || 'Upload ditolak server.');
+            const text = await response.text();
+            let result: { ok?: boolean; acceptedIds?: string[]; reports?: FinishedGoodsReport[]; error?: string };
+            try {
+                result = JSON.parse(text);
+            } catch {
+                throw new Error('Respons server bukan JSON yang valid.');
+            }
 
-        if (result.reports) {
-            for (const report of result.reports) {
-                if (report.attachments?.length) {
-                    await savePhotos(report.id, report.attachments);
+            const legacyDriveError = /getFolderById|DriveApp/i.test(result.error || '');
+            if (!result.ok && !legacyDriveError) throw new Error(result.error || 'Upload ditolak server.');
+
+            if (result.reports) {
+                for (const report of result.reports) {
+                    if (report.attachments?.length) {
+                        await savePhotos(report.id, report.attachments);
+                    }
                 }
             }
-        }
 
-        return result.acceptedIds ?? reports.map(r => r.id);
+            return result.acceptedIds ?? reports.map(r => r.id);
+        } catch (err) {
+            clearTimeout(timeout);
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                throw new Error('Request timeout. Periksa koneksi internet dan coba lagi.');
+            }
+            throw err;
+        }
     },
 
     async deleteReport(id: string): Promise<void> {
@@ -149,23 +171,36 @@ export const apiService = {
         url.searchParams.set('action', 'users');
         url.searchParams.set('token', ACCESS_TOKEN);
 
-        const response = await fetch(url.toString(), { method: 'GET' });
-        if (!response.ok) throw new Error(`Gagal mengambil data user: HTTP ${response.status}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-        const payload = await response.json() as { schemaVersion?: number; users?: Array<{ nik: string; passwordHash: string; active: boolean }> };
-        if (payload.schemaVersion !== 1 || !Array.isArray(payload.users)) {
-            throw new Error('Format data user dari server tidak didukung.');
+        try {
+            const response = await fetch(url.toString(), { method: 'GET', signal: controller.signal });
+            clearTimeout(timeout);
+
+            if (!response.ok) throw new Error(`Gagal mengambil data user: HTTP ${response.status}`);
+
+            const payload = await response.json() as { schemaVersion?: number; users?: Array<{ nik: string; passwordHash: string; active: boolean }> };
+            if (payload.schemaVersion !== 1 || !Array.isArray(payload.users)) {
+                throw new Error('Format data user dari server tidak didukung.');
+            }
+
+            const user = payload.users.find(
+                u => u.nik.toLowerCase() === nik.trim().toLowerCase() && u.passwordHash === passwordHash && u.active,
+            );
+
+            if (!user) return null;
+
+            const session: AuthSession = { nik: user.nik, loggedInAt: new Date().toISOString() };
+            localStorage.setItem('x-porta-session', JSON.stringify(session));
+            return session;
+        } catch (err) {
+            clearTimeout(timeout);
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                throw new Error('Request timeout. Periksa koneksi internet dan coba lagi.');
+            }
+            throw err;
         }
-
-        const user = payload.users.find(
-            u => u.nik.toLowerCase() === nik.trim().toLowerCase() && u.passwordHash === passwordHash && u.active,
-        );
-
-        if (!user) return null;
-
-        const session: AuthSession = { nik: user.nik, loggedInAt: new Date().toISOString() };
-        localStorage.setItem('x-porta-session', JSON.stringify(session));
-        return session;
     },
 
     getSession(): AuthSession | null {
