@@ -980,3 +980,150 @@ body {
     min-width: 80px;
   }
 }
+
+.photo-viewer-modal {
+  background: var(--color-white);
+  border-radius: 10px;
+  padding: 18px;
+  max-height: 88vh;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 420px;
+}
+
+.pv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.pv-title {
+  color: var(--color-ink);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.pv-close {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-ink);
+}
+
+.pv-thumbnails {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.pv-thumb {
+  width: 58px;
+  height: 68px;
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--color-white);
+  cursor: pointer;
+}
+
+.pv-thumb.selected {
+  border: 2px solid var(--color-green);
+}
+
+.pv-thumb img {
+  width: 48px;
+  height: 48px;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.pv-thumb-label {
+  color: var(--color-muted);
+  font-size: 10px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.pv-preview {
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 300px;
+  background: var(--color-paper);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.pv-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.pv-desc-label {
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 7px;
+}
+
+.pv-desc-input {
+  width: 100%;
+  min-height: 58px;
+  max-height: 100px;
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  padding: 10px;
+  color: var(--color-ink);
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+}
+
+.pv-actions-row {
+  display: flex;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.pv-btn {
+  flex: 1;
+  height: 40px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid var(--color-green);
+  background: var(--color-white);
+  color: var(--color-green);
+}
+
+.pv-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pv-btn.danger {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+
+.pv-btn.add-full {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid var(--color-line);
+  color: var(--color-green);
+}

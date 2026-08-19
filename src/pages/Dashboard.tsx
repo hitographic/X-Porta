@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole, ImagePlus } from 'lucide-react';
 import { apiService } from '../api/sync';
 import { exportReportPdf, exportReportsCsv } from '../utils/export';
-import { OQC_TYPES, type FinishedGoodsReport, type OqcType } from '../types/report';
+import { OQC_TYPES, type FinishedGoodsReport, type ReportAttachment, type OqcType } from '../types/report';
 import { format } from 'date-fns';
 import { id as dateFnsId } from 'date-fns/locale';
+import PhotoViewerModal from '../components/PhotoViewerModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -34,6 +35,9 @@ export default function Dashboard() {
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<FinishedGoodsReport | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Photo viewer
+  const [photoReport, setPhotoReport] = useState<FinishedGoodsReport | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -135,6 +139,16 @@ export default function Dashboard() {
     if (!step || step >= 3) return null;
     const labels: Record<number, string> = { 1: 'Informasi', 2: 'Fisik' };
     return labels[step] || null;
+  };
+
+  const handleSavePhotos = async (report: FinishedGoodsReport, attachments: ReportAttachment[]) => {
+    const updated = { ...report, attachments };
+    try {
+      await apiService.uploadReports([updated]);
+      setReports(prev => prev.map(r => r.id === report.id ? updated : r));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Gagal menyimpan foto.');
+    }
   };
 
   return (
@@ -263,14 +277,17 @@ export default function Dashboard() {
                   <FileText size={16} color="var(--color-red)" />
                   <span style={{ color: 'var(--color-red)' }}>PDF</span>
                 </button>
-                <Link
-                  to={`/reports/${report.id}`}
+                <button
                   className="btn-secondary"
-                  style={{ borderColor: 'var(--color-line)', color: 'var(--color-green)', display: 'flex', alignItems: 'center', gap: 5 }}
+                  style={{ borderColor: 'var(--color-line)', display: 'flex', alignItems: 'center', gap: 5 }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPhotoReport(report);
+                  }}
                 >
                   <ImagePlus size={16} color="var(--color-green)" />
                   <span style={{ color: 'var(--color-green)' }}>{report.attachments?.length ? `${report.attachments.length} foto` : 'Foto'}</span>
-                </Link>
+                </button>
                 <Link to={`/reports/${report.id}`} className="btn-secondary" style={{ borderColor: 'var(--color-line)', color: 'var(--color-green)' }}>
                   Buka
                 </Link>
@@ -376,6 +393,14 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {photoReport && (
+        <PhotoViewerModal
+          attachments={photoReport.attachments ?? []}
+          onClose={() => setPhotoReport(null)}
+          onSave={(attachments) => handleSavePhotos(photoReport, attachments)}
+        />
       )}
 
       <style>{`
