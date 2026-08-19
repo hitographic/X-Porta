@@ -251,12 +251,6 @@ export default function Dashboard() {
                   <span>Terakhir diubah di tahap: {getWorkflowLabel(report.workflowStep)}</span>
                 </div>
               )}
-              {report.attachments && report.attachments.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 11, color: 'var(--color-green)', fontWeight: 700 }}>
-                  <ImagePlus size={12} />
-                  <span>{report.attachments.length} foto</span>
-                </div>
-              )}
               <div className="actions">
                 <button
                   className="btn-secondary"
@@ -269,6 +263,14 @@ export default function Dashboard() {
                   <FileText size={16} color="var(--color-red)" />
                   <span style={{ color: 'var(--color-red)' }}>PDF</span>
                 </button>
+                <Link
+                  to={`/reports/${report.id}`}
+                  className="btn-secondary"
+                  style={{ borderColor: 'var(--color-line)', color: 'var(--color-green)', display: 'flex', alignItems: 'center', gap: 5 }}
+                >
+                  <ImagePlus size={16} color="var(--color-green)" />
+                  <span style={{ color: 'var(--color-green)' }}>{report.attachments?.length ? `${report.attachments.length} foto` : 'Foto'}</span>
+                </Link>
                 <Link to={`/reports/${report.id}`} className="btn-secondary" style={{ borderColor: 'var(--color-line)', color: 'var(--color-green)' }}>
                   Buka
                 </Link>
