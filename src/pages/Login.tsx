@@ -32,7 +32,7 @@ export default function Login() {
     try {
       const session = await apiService.login(nik, password);
       if (!session) {
-        setError('NIK atau password salah. Pastikan akun sudah tersinkronisasi.');
+        setError('NIK atau password salah. Periksa kembali data di Google Sheets.');
         return;
       }
       navigate('/');
@@ -54,7 +54,7 @@ export default function Login() {
       <div style={styles.form}>
         <div style={styles.formTitle}>Login pengguna</div>
         <div style={styles.formDescription}>
-          Gunakan akun yang sudah tersimpan di server. Data user diperbarui melalui menu sinkronisasi.
+          Gunakan NIK dan password yang terdaftar di Google Sheets.
         </div>
 
         <div style={styles.field}>
@@ -67,7 +67,7 @@ export default function Login() {
               onChange={(e) => setNik(e.target.value)}
               placeholder="Masukkan NIK"
               autoCapitalize="none"
-              autoCorrect={false}
+              autoCorrect="off"
               onKeyDown={(e) => e.key === 'Enter' && login()}
               style={styles.input}
             />
@@ -84,7 +84,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Masukkan password"
               autoCapitalize="none"
-              autoCorrect={false}
+              autoCorrect="off"
               onKeyDown={(e) => e.key === 'Enter' && login()}
               style={styles.input}
             />

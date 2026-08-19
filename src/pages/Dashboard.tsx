@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole, Unlock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole } from 'lucide-react';
 import { apiService } from '../api/sync';
 import { exportReportPdf, exportReportsCsv } from '../utils/export';
 import { OQC_TYPES, type FinishedGoodsReport, type OqcType } from '../types/report';

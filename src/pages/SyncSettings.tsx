@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CloudDownload, CloudUpload, Link2, LogOut, RefreshCw, Wifi } from 'lucide-react';
+import { ArrowLeft, CloudDownload, CloudUpload, Link2, LogOut, Wifi } from 'lucide-react';
 import { apiService } from '../api/sync';
 import type { SyncEnvelope } from '../types/report';
 

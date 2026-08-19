@@ -81,48 +81,28 @@ export const apiService = {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        // Default users (same as offline app) — always available without sync
-        const DEFAULT_USERS: Array<{ nik: string; passwordHash: string }> = [
-            { nik: 'admin', passwordHash: '82a79f11b4acb52a642ef7e339dfce4aa92ff65ed2e7ab702d798dbe10eca0b8' },
-            { nik: '50086913', passwordHash: '09acaf71c1fed8456f00a646c63efdb37fd175d4c83203768868fbf19ddda387' },
-        ];
+        // Users are fetched from Google Sheets (via Google Apps Script) — single source of truth.
+        const url = new URL(ENDPOINT_URL);
+        url.searchParams.set('action', 'users');
+        url.searchParams.set('token', ACCESS_TOKEN);
 
-        // 1) Check default users first (offline fallback)
-        const defaultMatch = DEFAULT_USERS.find(
-            u => u.nik.toLowerCase() === nik.trim().toLowerCase() && u.passwordHash === passwordHash,
+        const response = await fetch(url.toString(), { method: 'GET' });
+        if (!response.ok) throw new Error(`Gagal mengambil data user: HTTP ${response.status}`);
+
+        const payload = await response.json() as { schemaVersion?: number; users?: Array<{ nik: string; passwordHash: string; active: boolean }> };
+        if (payload.schemaVersion !== 1 || !Array.isArray(payload.users)) {
+            throw new Error('Format data user dari server tidak didukung.');
+        }
+
+        const user = payload.users.find(
+            u => u.nik.toLowerCase() === nik.trim().toLowerCase() && u.passwordHash === passwordHash && u.active,
         );
-        if (defaultMatch) {
-            const session: AuthSession = { nik: defaultMatch.nik, loggedInAt: new Date().toISOString() };
-            localStorage.setItem('x-porta-session', JSON.stringify(session));
-            return session;
-        }
 
-        // 2) Try server authentication
-        try {
-            const url = new URL(ENDPOINT_URL);
-            url.searchParams.set('action', 'users');
-            url.searchParams.set('token', ACCESS_TOKEN);
+        if (!user) return null;
 
-            const response = await fetch(url.toString(), { method: 'GET' });
-            if (!response.ok) throw new Error(`Gagal mengambil data user: HTTP ${response.status}`);
-
-            const payload = await response.json() as { schemaVersion?: number; users?: Array<{ nik: string; password_hash: string; active: boolean }> };
-            if (payload.schemaVersion !== 1 || !Array.isArray(payload.users)) {
-                throw new Error('Format data user dari server tidak didukung.');
-            }
-
-            const user = payload.users.find(
-                u => u.nik.toLowerCase() === nik.trim().toLowerCase() && u.password_hash === passwordHash && u.active,
-            );
-
-            if (!user) return null;
-
-            const session: AuthSession = { nik: user.nik, loggedInAt: new Date().toISOString() };
-            localStorage.setItem('x-porta-session', JSON.stringify(session));
-            return session;
-        } catch {
-            return null;
-        }
+        const session: AuthSession = { nik: user.nik, loggedInAt: new Date().toISOString() };
+        localStorage.setItem('x-porta-session', JSON.stringify(session));
+        return session;
     },
 
     getSession(): AuthSession | null {
