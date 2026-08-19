@@ -1,33 +1,40 @@
-# React + TypeScript + Vite
+# X-Porta WebApp
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Web dashboard untuk pengelolaan laporan **Finished Goods QC** (PDQC-020).
 
-Currently, two official plugins are available:
+## Fitur
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Dashboard** — Pencarian, filter lanjutan (OQC type, shift, line, tahun, status), paginasi, ekspor CSV
+- **Form Laporan** — 3 tahap (Informasi → Fisik/Kriteria Reject → Analisa) dengan workflow step locking
+- **Detail Laporan** — Tampilan lengkap hasil reject criteria, total reject, status A/R, dan hasil analisa organoleptik/kimia
+- **Export PDF** — Generate laporan PDF format PDQC-020
+- **Sinkronisasi** — Upload/download data ke Google Sheets/Drive via Google Apps Script
+- **Autentikasi** — Login dengan NIK dan password
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + TypeScript
+- Vite 8
+- React Router DOM 7
+- Lucide React (icons)
+- date-fns
 
-## Expanding the Oxlint configuration
+## Development
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
-# X-Porta
+## Build
+
+```bash
+npm run build
+```
+
+Output build tersedia di folder `dist/`.
+
+## Backend
+
+Menggunakan Google Apps Script sebagai backend API untuk sinkronisasi data laporan dan autentikasi user.
+v2
