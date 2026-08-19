@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronDown, ChevronUp, Edit, FileText, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ChevronUp, Edit, FileText, Image, X } from 'lucide-react';
 import { apiService } from '../api/sync';
 import { ANALYSIS_PARAMETERS, calculateAcceptRejectStatus, calculateSampleRejects, REJECT_CRITERIA } from '../types/report';
-import type { FinishedGoodsReport } from '../types/report';
+import type { FinishedGoodsReport, ReportAttachment } from '../types/report';
 import { exportReportPdf } from '../utils/export';
 import { format } from 'date-fns';
 import { id as dateFnsId } from 'date-fns/locale';
@@ -27,6 +27,7 @@ export default function ReportDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState<number | null>(1);
+  const [viewPhoto, setViewPhoto] = useState<ReportAttachment | null>(null);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -234,6 +235,123 @@ export default function ReportDetail() {
           </div>
         ))}
       </div>
+
+      {/* Photos section */}
+      {report.attachments && report.attachments.length > 0 && (
+        <div style={cardStyle}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: COLORS.ink, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Image size={18} />
+            Foto Lampiran ({report.attachments.length})
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
+            {report.attachments.map(attachment => (
+              <div
+                key={attachment.id}
+                onClick={() => setViewPhoto(attachment)}
+                style={{
+                  aspectRatio: '1',
+                  borderRadius: 6,
+                  overflow: 'hidden',
+                  border: `1px solid ${COLORS.line}`,
+                  cursor: 'pointer',
+                  position: 'relative',
+                }}
+              >
+                <img
+                  src={attachment.dataUrl}
+                  alt={attachment.description || 'Foto lampiran'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+                {attachment.description && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: '4px 6px',
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    color: '#fff',
+                    fontSize: 10,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {attachment.description}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Photo viewer modal */}
+      {viewPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.9)',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+          onClick={() => setViewPhoto(null)}
+        >
+          <button
+            onClick={() => setViewPhoto(null)}
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              color: '#fff',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            aria-label="Tutup"
+          >
+            <X size={24} />
+          </button>
+          <img
+            src={viewPhoto.dataUrl}
+            alt={viewPhoto.description || 'Foto lampiran'}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '80vh',
+              objectFit: 'contain',
+              borderRadius: 8,
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+          {viewPhoto.description && (
+            <div style={{
+              marginTop: 16,
+              padding: '10px 16px',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              color: '#fff',
+              fontSize: 14,
+              textAlign: 'center',
+              maxWidth: '80%',
+            }}>
+              {viewPhoto.description}
+            </div>
+          )}
+          <div style={{ marginTop: 10, color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+            {viewPhoto.width} x {viewPhoto.height}px
+          </div>
+        </div>
+      )}
     </div>
   );
 }

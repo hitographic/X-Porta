@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, LockKeyhole, Save, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, ImagePlus, LockKeyhole, Save, Trash2, X } from 'lucide-react';
 import { apiService } from '../api/sync';
 import { ANALYSIS_PARAMETERS, createEmptyReport, REJECT_CRITERIA } from '../types/report';
-import type { FinishedGoodsReport, ReportDraft, WorkflowStep } from '../types/report';
+import type { FinishedGoodsReport, ReportAttachment, ReportDraft, WorkflowStep } from '../types/report';
+import { processImageFile, canAddAttachment, getMaxAttachments } from '../utils/photos';
 
 const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'date' | 'number'; placeholder?: string }[] = [
   { key: 'reportNumber', label: 'Nomor laporan' },
@@ -24,12 +25,13 @@ const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'date' | 'num
   { key: 'approverName', label: 'Nama yang mengetahui' },
 ];
 
-type FormTab = 'info' | 'criteria' | 'analysis';
+type FormTab = 'info' | 'criteria' | 'analysis' | 'photos';
 
 const TABS: { key: FormTab; label: string; step: WorkflowStep }[] = [
   { key: 'info', label: '1. Informasi', step: 1 },
   { key: 'criteria', label: '2. Fisik', step: 2 },
   { key: 'analysis', label: '3. Analisa', step: 3 },
+  { key: 'photos', label: '4. Foto', step: 3 },
 ];
 
 function normalizeDraft(value: ReportDraft): ReportDraft {
@@ -65,6 +67,10 @@ export default function ReportForm() {
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [attachments, setAttachments] = useState<ReportAttachment[]>([]);
+  const [selectedPhoto, setSelectedPhoto] = useState<ReportAttachment | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -80,6 +86,7 @@ export default function ReportForm() {
         const normalized = normalizeDraft(found as unknown as ReportDraft);
         setOriginal(found);
         setDraft(normalized);
+        setAttachments(found.attachments ?? []);
         setTab(TABS.find(t => t.step === (normalized.workflowStep ?? 3))?.key ?? 'analysis');
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Gagal memuat laporan untuk diedit.');
@@ -135,6 +142,35 @@ export default function ReportForm() {
     }
   };
 
+  const handleAddPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!canAddAttachment(attachments.length)) {
+      alert(`Maksimal ${getMaxAttachments()} foto per laporan.`);
+      return;
+    }
+    setUploading(true);
+    try {
+      const attachment = await processImageFile(file);
+      setAttachments(prev => [...prev, attachment]);
+    } catch {
+      alert('Gagal memproses gambar. Coba lagi.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemovePhoto = (attachmentId: string) => {
+    if (!confirm('Hapus foto ini?')) return;
+    setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    if (selectedPhoto?.id === attachmentId) setSelectedPhoto(null);
+  };
+
+  const handleUpdateDescription = (attachmentId: string, description: string) => {
+    setAttachments(prev => prev.map(a => a.id === attachmentId ? { ...a, description } : a));
+  };
+
   const validateInfo = (): boolean => {
     if (draft.flavour.trim() && draft.productionCode.trim()) return true;
     alert('Flavour dan kode produksi harus diisi sebelum masuk ke tahap Fisik.');
@@ -183,6 +219,7 @@ export default function ReportForm() {
       updatedAt: now,
       syncState: original?.lastSyncedAt ? 'modified' : (original?.syncState ?? 'local'),
       lastSyncedAt: original?.lastSyncedAt ?? null,
+      attachments,
     };
 
     try {
@@ -341,6 +378,132 @@ export default function ReportForm() {
                 <X size={17} /> Ditolak
               </button>
             </div>
+          </section>
+        )}
+
+        {tab === 'photos' && (
+          <section>
+            <h2 className="form-section-title">Foto lampiran</h2>
+            <p className="form-helper">Maksimal {getMaxAttachments()} foto. Format: JPG/PNG.</p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAddPhoto}
+              style={{ display: 'none' }}
+            />
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, marginTop: 12 }}>
+              {attachments.map(attachment => (
+                <div
+                  key={attachment.id}
+                  onClick={() => setSelectedPhoto(attachment)}
+                  style={{
+                    position: 'relative',
+                    borderRadius: 6,
+                    overflow: 'hidden',
+                    border: selectedPhoto?.id === attachment.id ? '2px solid var(--color-green)' : '1px solid var(--color-line)',
+                    cursor: 'pointer',
+                    aspectRatio: '1',
+                  }}
+                >
+                  <img
+                    src={attachment.dataUrl}
+                    alt={attachment.description || 'Foto lampiran'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleRemovePhoto(attachment.id); }}
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: 'rgba(0,0,0,0.6)',
+                      color: '#fff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    aria-label="Hapus foto"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+
+              {canAddAttachment(attachments.length) && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  style={{
+                    aspectRatio: '1',
+                    borderRadius: 6,
+                    border: '2px dashed var(--color-line)',
+                    backgroundColor: 'var(--color-paper)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    color: 'var(--color-muted)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
+                >
+                  <ImagePlus size={24} />
+                  {uploading ? 'Memproses...' : 'Tambah foto'}
+                </button>
+              )}
+            </div>
+
+            {selectedPhoto && (
+              <div style={{
+                marginTop: 16,
+                padding: 14,
+                backgroundColor: 'var(--color-paper)',
+                border: '1px solid var(--color-line)',
+                borderRadius: 6,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-ink)', marginBottom: 10 }}>Detail foto</div>
+                <img
+                  src={selectedPhoto.dataUrl}
+                  alt={selectedPhoto.description || 'Preview'}
+                  style={{ width: '100%', maxHeight: 300, objectFit: 'contain', borderRadius: 4, marginBottom: 10 }}
+                />
+                <div className="form-field">
+                  <label htmlFor="photo-desc">Deskripsi</label>
+                  <input
+                    id="photo-desc"
+                    className="form-input"
+                    value={selectedPhoto.description}
+                    placeholder="Deskripsi foto (opsional)"
+                    onChange={e => {
+                      const desc = e.target.value;
+                      handleUpdateDescription(selectedPhoto.id, desc);
+                      setSelectedPhoto(prev => prev ? { ...prev, description: desc } : null);
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 6 }}>
+                  {selectedPhoto.width} x {selectedPhoto.height}px · {Math.round(selectedPhoto.sizeBytes / 1024)} KB
+                </div>
+              </div>
+            )}
+
+            {attachments.length > 0 && (
+              <div style={{ marginTop: 12, fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>
+                {attachments.length} / {getMaxAttachments()} foto
+              </div>
+            )}
           </section>
         )}
 

@@ -6,6 +6,17 @@ export type OqcType = 'OQC Regular' | 'OQC Sticker' | 'OQC Repack' | 'OQC Monito
 
 export const OQC_TYPES: OqcType[] = ['OQC Regular', 'OQC Sticker', 'OQC Repack', 'OQC Monitoring'];
 
+export interface ReportAttachment {
+  id: string;
+  description: string;
+  dataUrl: string;
+  fileName: string;
+  width: number;
+  height: number;
+  sizeBytes: number;
+  createdAt: string;
+}
+
 export interface RejectCriterion {
     id: number;
     category: 'A' | 'B';
@@ -54,6 +65,7 @@ export interface FinishedGoodsReport {
     updatedAt: string;
     syncState: SyncState;
     lastSyncedAt: string | null;
+    attachments: ReportAttachment[];
 }
 
 export type ReportDraft = Omit<FinishedGoodsReport, 'id' | 'createdAt' | 'updatedAt' | 'syncState' | 'lastSyncedAt'>;
@@ -165,5 +177,6 @@ export function createEmptyReport(): ReportDraft {
         approverName: '',
         rejectResults,
         analysisResults,
+        attachments: [],
     };
 }

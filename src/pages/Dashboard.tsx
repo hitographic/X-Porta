@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole, ImagePlus } from 'lucide-react';
 import { apiService } from '../api/sync';
 import { exportReportPdf, exportReportsCsv } from '../utils/export';
 import { OQC_TYPES, type FinishedGoodsReport, type OqcType } from '../types/report';
@@ -249,6 +249,12 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 11, color: 'var(--color-orange)', fontWeight: 700 }}>
                   <LockKeyhole size={12} />
                   <span>Terakhir diubah di tahap: {getWorkflowLabel(report.workflowStep)}</span>
+                </div>
+              )}
+              {report.attachments && report.attachments.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 11, color: 'var(--color-green)', fontWeight: 700 }}>
+                  <ImagePlus size={12} />
+                  <span>{report.attachments.length} foto</span>
                 </div>
               )}
               <div className="actions">
