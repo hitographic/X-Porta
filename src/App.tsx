@@ -29,11 +29,8 @@ function App() {
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img src="./logo.png" alt="X-Porta" style={{ height: 32, width: 'auto' }} />
-          <div>
-            <div className="title">Finished Goods QC</div>
-            <div className="subtitle">
-              PDQC-020 · {session ? 'WebApp Dashboard' : 'Login'}
-            </div>
+          <div className="subtitle">
+            PDQC-020 · {session ? 'WebApp Dashboard' : 'Login'}
           </div>
         </div>
         {session && (

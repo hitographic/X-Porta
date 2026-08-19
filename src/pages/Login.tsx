@@ -47,7 +47,6 @@ export default function Login() {
     <div style={styles.container}>
       <div style={styles.brand}>
         <img src="./logo.png" alt="X-Porta Logo" style={{ width: 120, height: 'auto', marginBottom: 12 }} />
-        <div style={styles.title}>Finished Goods QC</div>
         <div style={styles.subtitle}>Masuk ke workspace laporan</div>
       </div>
 
