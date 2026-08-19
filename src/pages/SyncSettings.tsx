@@ -93,7 +93,7 @@ export default function SyncSettings() {
           <ArrowLeft size={21} />
         </button>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/logo.png" alt="X-Porta" style={{ height: 28, width: 'auto' }} />
+          <img src="./logo.png" alt="X-Porta" style={{ height: 28, width: 'auto' }} />
           <div>
             <div style={styles.title}>Sinkronisasi data</div>
           </div>

@@ -28,7 +28,7 @@ function App() {
     <div className="safe-area">
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="/logo.png" alt="X-Porta" style={{ height: 32, width: 'auto' }} />
+          <img src="./logo.png" alt="X-Porta" style={{ height: 32, width: 'auto' }} />
           <div>
             <div className="title">Finished Goods QC</div>
             <div className="subtitle">
