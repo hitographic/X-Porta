@@ -1,4 +1,5 @@
-import type { FinishedGoodsReport, SyncEnvelope } from '../types/report';
+import type { FinishedGoodsReport, ReportAttachment, SyncEnvelope } from '../types/report';
+import { savePhotos, getAllPhotos } from '../utils/photoStorage';
 
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxyhnub36943ZHN8O1i2YE3_qChD6EvllAjnPbCGgB3waNJhYxF4Zn6LUQFz30bxUC98w/exec';
 const ACCESS_TOKEN = 'Lea4rnt0l1sten';
@@ -8,6 +9,14 @@ export interface AuthSession {
     loggedInAt: string;
 }
 
+interface AttachmentUpload {
+    reportId: string;
+    attachmentId: string;
+    fileName: string;
+    mimeType: string;
+    base64: string;
+}
+
 function getEndpoint(action: 'download' | 'upload'): string {
     const url = new URL(ENDPOINT_URL);
     url.searchParams.set('action', action);
@@ -15,45 +24,92 @@ function getEndpoint(action: 'download' | 'upload'): string {
     return url.toString();
 }
 
+function getBase64FromDataUrl(dataUrl: string): string {
+    const parts = dataUrl.split(',');
+    if (parts.length < 2) return '';
+    return parts[1];
+}
+
+function stripDataUrl(attachment: ReportAttachment): ReportAttachment {
+    return {
+        ...attachment,
+        dataUrl: '',
+    };
+}
+
 export const apiService = {
     async fetchReports(): Promise<FinishedGoodsReport[]> {
-        const response = await fetch(getEndpoint('download'), {
-            method: 'GET',
-            // Google Apps Script usually requires a no-cors or simple request if we don't have OPTIONS handled.
-            // Actually, we shouldn't pass headers if we want simple requests to avoid preflight issues in browsers.
-            // But let's try standard fetch first.
-            // For Apps Script, following redirects is automatic.
-        });
-
-        if (!response.ok) {
-            throw new Error(`Gagal mengambil data: HTTP ${response.status}`);
-        }
+        const response = await fetch(getEndpoint('download'), { method: 'GET' });
+        if (!response.ok) throw new Error(`Gagal mengambil data: HTTP ${response.status}`);
 
         const data: SyncEnvelope = await response.json();
-        
         if (data.schemaVersion !== 1 || !Array.isArray(data.reports)) {
             throw new Error('Format data dari server tidak didukung.');
         }
 
-        return data.reports;
+        const reports = data.reports;
+        const photosMap = await getAllPhotos();
+
+        return reports.map(report => {
+            const serverAttachments = report.attachments ?? [];
+            const localPhotos = photosMap.get(report.id) ?? [];
+
+            const mergedAttachments = serverAttachments.map(serverAtt => {
+                const localAtt = localPhotos.find(l => l.id === serverAtt.id);
+                if (serverAtt.driveUrl) {
+                    return { ...serverAtt, dataUrl: serverAtt.driveUrl };
+                }
+                if (localAtt?.dataUrl) {
+                    return { ...serverAtt, dataUrl: localAtt.dataUrl };
+                }
+                return serverAtt;
+            });
+
+            return { ...report, attachments: mergedAttachments };
+        });
     },
 
     async uploadReports(reports: FinishedGoodsReport[]): Promise<string[]> {
-        const payload: SyncEnvelope & { deviceName: string } = {
+        const attachmentUploads: AttachmentUpload[] = [];
+
+        for (const report of reports) {
+            if (report.attachments?.length) {
+                await savePhotos(report.id, report.attachments);
+
+                for (const att of report.attachments) {
+                    if (att.dataUrl && !att.driveUrl) {
+                        attachmentUploads.push({
+                            reportId: report.id,
+                            attachmentId: att.id,
+                            fileName: att.fileName,
+                            mimeType: 'image/jpeg',
+                            base64: getBase64FromDataUrl(att.dataUrl),
+                        });
+                    }
+                }
+            }
+        }
+
+        const strippedReports = reports.map(r => ({
+            ...r,
+            attachments: (r.attachments ?? []).map(stripDataUrl),
+        }));
+
+        const payload = {
             schemaVersion: 1,
             deviceName: 'WebApp Dashboard',
-            reports,
+            reports: strippedReports,
+            attachmentUploads,
         };
 
         const response = await fetch(getEndpoint('upload'), {
             method: 'POST',
-            // Simple request (text/plain) to avoid CORS preflight, which GAS might reject.
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload),
         });
 
         const text = await response.text();
-        let result: { ok?: boolean; acceptedIds?: string[]; error?: string };
+        let result: { ok?: boolean; acceptedIds?: string[]; reports?: FinishedGoodsReport[]; error?: string };
         try {
             result = JSON.parse(text);
         } catch {
@@ -62,6 +118,14 @@ export const apiService = {
 
         const legacyDriveError = /getFolderById|DriveApp/i.test(result.error || '');
         if (!result.ok && !legacyDriveError) throw new Error(result.error || 'Upload ditolak server.');
+
+        if (result.reports) {
+            for (const report of result.reports) {
+                if (report.attachments?.length) {
+                    await savePhotos(report.id, report.attachments);
+                }
+            }
+        }
 
         return result.acceptedIds ?? reports.map(r => r.id);
     },
@@ -81,7 +145,6 @@ export const apiService = {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        // Users are fetched from Google Sheets (via Google Apps Script) — single source of truth.
         const url = new URL(ENDPOINT_URL);
         url.searchParams.set('action', 'users');
         url.searchParams.set('token', ACCESS_TOKEN);

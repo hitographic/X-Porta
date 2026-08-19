@@ -409,7 +409,7 @@ export default function ReportForm() {
                   }}
                 >
                   <img
-                    src={attachment.dataUrl}
+                    src={attachment.driveUrl || attachment.dataUrl}
                     alt={attachment.description || 'Foto lampiran'}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
@@ -475,7 +475,7 @@ export default function ReportForm() {
               }}>
                 <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-ink)', marginBottom: 10 }}>Detail foto</div>
                 <img
-                  src={selectedPhoto.dataUrl}
+                  src={selectedPhoto.driveUrl || selectedPhoto.dataUrl}
                   alt={selectedPhoto.description || 'Preview'}
                   style={{ width: '100%', maxHeight: 300, objectFit: 'contain', borderRadius: 4, marginBottom: 10 }}
                 />

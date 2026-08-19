@@ -14,6 +14,8 @@ export interface ReportAttachment {
   width: number;
   height: number;
   sizeBytes: number;
+  driveFileId: string | null;
+  driveUrl: string | null;
   createdAt: string;
 }
 

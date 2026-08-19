@@ -258,7 +258,7 @@ export default function ReportDetail() {
                 }}
               >
                 <img
-                  src={attachment.dataUrl}
+                  src={attachment.driveUrl || attachment.dataUrl}
                   alt={attachment.description || 'Foto lampiran'}
                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
@@ -323,7 +323,7 @@ export default function ReportDetail() {
             <X size={24} />
           </button>
           <img
-            src={viewPhoto.dataUrl}
+            src={viewPhoto.driveUrl || viewPhoto.dataUrl}
             alt={viewPhoto.description || 'Foto lampiran'}
             style={{
               maxWidth: '100%',

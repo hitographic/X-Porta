@@ -65,6 +65,8 @@ export async function processImageFile(file: File): Promise<ReportAttachment> {
     width: squareSize,
     height: squareSize,
     sizeBytes,
+    driveFileId: null,
+    driveUrl: null,
     createdAt: new Date().toISOString(),
   };
 }

@@ -57,7 +57,7 @@ function buildAttachmentPageHtml(report: FinishedGoodsReport): string {
 
     const images = report.attachments.map((attachment, index) => {
         const description = escapeHtml(attachment.description || `Foto lampiran ke-${index + 1}`);
-        return `<figure class="attachment"><img src="${escapeHtml(attachment.dataUrl)}" /><figcaption>${description}</figcaption></figure>`;
+        return `<figure class="attachment"><img src="${escapeHtml(attachment.driveUrl || attachment.dataUrl)}" /><figcaption>${description}</figcaption></figure>`;
     });
 
     return `<div class="attachment-page"><div class="attachment-title">LAMPIRAN FOTO</div><div class="attachment-grid">${images.join('')}</div></div>`;
