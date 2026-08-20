@@ -12,7 +12,6 @@ const COLORS = {
   white: '#FFFFFF',
   green: '#176B5B',
   greenLight: '#1E8A76',
-  greenSoft: '#E3F1EC',
   red: '#A33832',
 };
 
@@ -182,28 +181,7 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: 'hidden',
   },
   cardInner: {
-    padding: '36px 28px 32px',
-  },
-  iconWrap: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: '50%',
-    background: COLORS.greenSoft,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: 22,
-    fontWeight: 800,
-    color: COLORS.ink,
-    marginBottom: 28,
+    padding: '28px 28px 32px',
   },
   field: {
     marginBottom: 14,
@@ -279,12 +257,5 @@ const styles: Record<string, React.CSSProperties> = {
     borderTopColor: '#fff',
     borderRadius: '50%',
     animation: 'spin 0.6s linear infinite',
-  },
-  footer: {
-    marginTop: 28,
-    color: COLORS.muted,
-    fontSize: 11,
-    textAlign: 'center',
-    opacity: 0.7,
   },
 };
