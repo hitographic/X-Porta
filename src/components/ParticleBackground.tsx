@@ -82,36 +82,6 @@ export default function ParticleBackground() {
       ctx.stroke();
     };
 
-    const drawRadialWeb = (x: number, y: number, alpha: number) => {
-      const spokes = 6;
-      const rings = 3;
-
-      for (let s = 0; s < spokes; s++) {
-        const angle = (s / spokes) * Math.PI * 2;
-        const endX = x + Math.cos(angle) * 60;
-        const endY = y + Math.sin(angle) * 60;
-
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(endX, endY);
-        ctx.strokeStyle = `rgba(23, 107, 91, ${alpha * 0.3})`;
-        ctx.lineWidth = 0.4;
-        ctx.stroke();
-
-        for (let r = 1; r <= rings; r++) {
-          const ringRadius = (r / rings) * 60;
-          const startAngle = (s / spokes) * Math.PI * 2;
-          const endAngle = ((s + 1) / spokes) * Math.PI * 2;
-
-          ctx.beginPath();
-          ctx.arc(x, y, ringRadius, startAngle, endAngle);
-          ctx.strokeStyle = `rgba(23, 107, 91, ${alpha * 0.2})`;
-          ctx.lineWidth = 0.3;
-          ctx.stroke();
-        }
-      }
-    };
-
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -183,8 +153,6 @@ export default function ParticleBackground() {
           }
         });
 
-        // Draw radial web at mouse
-        drawRadialWeb(mouseX, mouseY, 0.6);
       }
 
       animationId = requestAnimationFrame(draw);
