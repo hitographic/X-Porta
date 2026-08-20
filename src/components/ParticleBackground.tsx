@@ -1,15 +1,16 @@
 import { useEffect, useRef } from 'react';
 
-interface Node {
+interface Particle {
   x: number;
   y: number;
   vx: number;
   vy: number;
-  radius: number;
-  opacity: number;
-  angle: number;
-  speed: number;
-  orbit: number;
+  size: number;
+  depth: number;
+  phase: number;
+  baseX: number;
+  baseY: number;
+  hue: number;
 }
 
 export default function ParticleBackground() {
@@ -22,157 +23,177 @@ export default function ParticleBackground() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationId: number;
-    let nodes: Node[] = [];
-    let mouseX = -1000;
-    let mouseY = -1000;
-    let mouseActive = false;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let w = 0;
+    let h = 0;
+    let raf = 0;
+    let lastTime = performance.now();
+    let particles: Particle[] = [];
+    const mouse = { x: -9999, y: -9999, active: false };
+
+    const sprite = document.createElement('canvas');
+    sprite.width = 64;
+    sprite.height = 64;
+    const sctx = sprite.getContext('2d')!;
+    const grad = sctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+    grad.addColorStop(0.35, 'rgba(120, 220, 200, 0.35)');
+    grad.addColorStop(0.7, 'rgba(23, 107, 91, 0.12)');
+    grad.addColorStop(1, 'rgba(23, 107, 91, 0)');
+    sctx.fillStyle = grad;
+    sctx.fillRect(0, 0, 64, 64);
+
+    const palette = [196, 168, 215, 150, 240];
 
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      createParticles();
     };
 
-    const createNodes = () => {
-      const count = Math.floor((canvas.width * canvas.height) / 12000);
-      nodes = Array.from({ length: count }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        radius: Math.random() * 2.5 + 1,
-        opacity: Math.random() * 0.5 + 0.15,
-        angle: Math.random() * Math.PI * 2,
-        speed: Math.random() * 0.005 + 0.002,
-        orbit: Math.random() * 30 + 10,
-      }));
+    const createParticles = () => {
+      const count = Math.min(Math.floor((w * h) / 9000), 150);
+      particles = Array.from({ length: count }, () => {
+        const depth = Math.random();
+        return {
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: 0,
+          vy: 0,
+          size: 1 + depth * 2.6,
+          depth,
+          phase: Math.random() * Math.PI * 2,
+          baseX: Math.random() * w,
+          baseY: Math.random() * h,
+          hue: palette[Math.floor(Math.random() * palette.length)],
+        };
+      });
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      mouseActive = true;
+    const onMove = (x: number, y: number) => {
+      mouse.x = x;
+      mouse.y = y;
+      mouse.active = true;
     };
 
-    const handleMouseLeave = () => {
-      mouseActive = false;
+    const onMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      if (t) onMove(t.clientX, t.clientY);
+    };
+    const onMouseLeave = () => {
+      mouse.active = false;
     };
 
-    const drawWeb = (
-      x1: number, y1: number, x2: number, y2: number,
-      dist: number, maxDist: number, alpha: number
-    ) => {
-      const t = 1 - dist / maxDist;
-      const segments = 5;
-      const sag = t * 15;
+    const step = (dt: number, t: number) => {
+      const damp = Math.pow(0.965, dt * 60);
 
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
+      for (const p of particles) {
+        p.baseX += Math.sin(t * 0.0004 + p.phase) * 0.12 * dt * 60;
+        p.baseY += Math.cos(t * 0.00033 + p.phase * 1.3) * 0.12 * dt * 60;
 
-      for (let s = 1; s < segments; s++) {
-        const frac = s / segments;
-        const mx = x1 + (x2 - x1) * frac;
-        const my = y1 + (y2 - y1) * frac + sag * Math.sin(frac * Math.PI);
-        ctx.lineTo(mx, my);
-      }
+        if (mouse.active) {
+          const dx = mouse.x - p.x;
+          const dy = mouse.y - p.y;
+          const dist = Math.hypot(dx, dy);
 
-      ctx.lineTo(x2, y2);
-      ctx.strokeStyle = `rgba(23, 107, 91, ${alpha * t})`;
-      ctx.lineWidth = 0.6;
-      ctx.stroke();
-    };
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Update and draw nodes
-      nodes.forEach((n) => {
-        n.angle += n.speed;
-
-        const orbitX = Math.cos(n.angle) * n.orbit;
-        const orbitY = Math.sin(n.angle) * n.orbit;
-
-        n.x += n.vx;
-        n.y += n.vy;
-
-        if (mouseActive) {
-          const dx = mouseX - n.x;
-          const dy = mouseY - n.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 200 && dist > 0) {
-            const force = (200 - dist) / 200;
-            n.vx += (dx / dist) * force * 0.08;
-            n.vy += (dy / dist) * force * 0.08;
+          if (dist < 320 && dist > 0.001) {
+            const fall = 1 - dist / 320;
+            const pull = fall * 0.14 * dt * 60;
+            const whirl = fall * 0.16 * dt * 60;
+            p.vx += (dx / dist) * pull - (dy / dist) * whirl;
+            p.vy += (dy / dist) * pull + (dx / dist) * whirl;
           }
         }
 
-        n.vx *= 0.98;
-        n.vy *= 0.98;
+        p.vx += (p.baseX - p.x) * 0.008 * dt * 60;
+        p.vy += (p.baseY - p.y) * 0.008 * dt * 60;
 
-        if (n.x < -50) n.x = canvas.width + 50;
-        if (n.x > canvas.width + 50) n.x = -50;
-        if (n.y < -50) n.y = canvas.height + 50;
-        if (n.y > canvas.height + 50) n.y = -50;
+        p.vx *= damp;
+        p.vy *= damp;
 
-        const drawX = n.x + orbitX;
-        const drawY = n.y + orbitY;
+        p.x += p.vx;
+        p.y += p.vy;
 
-        ctx.beginPath();
-        ctx.arc(drawX, drawY, n.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(23, 107, 91, ${n.opacity})`;
-        ctx.fill();
-      });
+        if (p.x < -60) p.x = w + 60;
+        if (p.x > w + 60) p.x = -60;
+        if (p.y < -60) p.y = h + 60;
+        if (p.y > h + 60) p.y = -60;
+      }
+    };
 
-      // Draw web connections between nearby nodes
-      for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-          const n1 = nodes[i];
-          const n2 = nodes[j];
-          const dx = n1.x - n2.x;
-          const dy = n1.y - n2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const maxDist = 100;
+    const draw = (t: number) => {
+      const dt = Math.min((t - lastTime) / 1000, 0.05);
+      lastTime = t;
+      step(dt, t);
+
+      ctx.clearRect(0, 0, w, h);
+
+      const glow = 0.75 + 0.25 * Math.sin(t * 0.0012);
+
+      for (let i = 0; i < particles.length; i++) {
+        const a = particles[i];
+        for (let j = i + 1; j < particles.length; j++) {
+          const b = particles[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          const maxDist = 90 + 60 * (a.depth + b.depth) * 0.5;
 
           if (dist < maxDist) {
-            drawWeb(n1.x, n1.y, n2.x, n2.y, dist, maxDist, 0.12);
+            const t = 1 - dist / maxDist;
+            const alpha = t * t * 0.28 * glow;
+            const midDepth = (a.depth + b.depth) * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `hsla(${midDepth * 60 + 150}, 45%, ${60 - midDepth * 15}%, ${alpha})`;
+            ctx.lineWidth = 0.3 + midDepth * 0.7;
+            ctx.stroke();
           }
         }
       }
 
-      // Draw web to mouse
-      if (mouseActive) {
-        nodes.forEach((n) => {
-          const dx = mouseX - n.x;
-          const dy = mouseY - n.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 180) {
-            const alpha = (1 - dist / 180) * 0.25;
-            drawWeb(n.x, n.y, mouseX, mouseY, dist, 180, alpha);
-          }
-        });
-
+      for (const p of particles) {
+        const nearMouse =
+          mouse.active
+            ? Math.max(0, 1 - Math.hypot(mouse.x - p.x, mouse.y - p.y) / 260)
+            : 0;
+        const scale = 1 + nearMouse * 1.6;
+        const size = p.size * scale * 3;
+        ctx.globalAlpha = (0.35 + p.depth * 0.5) * (1 + nearMouse * 0.8) * glow;
+        ctx.drawImage(sprite, p.x - size / 2, p.y - size / 2, size, size);
       }
+      ctx.globalAlpha = 1;
+    };
 
-      animationId = requestAnimationFrame(draw);
+    const loop = (t: number) => {
+      draw(t);
+      raf = requestAnimationFrame(loop);
     };
 
     resize();
-    createNodes();
-    draw();
+    raf = requestAnimationFrame(loop);
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseleave', handleMouseLeave);
-    window.addEventListener('resize', () => {
-      resize();
-      createNodes();
-    });
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseleave', onMouseLeave);
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onMouseLeave);
+    window.addEventListener('resize', resize);
 
     return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseleave', handleMouseLeave);
+      cancelAnimationFrame(raf);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseleave', onMouseLeave);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onMouseLeave);
       window.removeEventListener('resize', resize);
     };
   }, []);
@@ -186,6 +207,7 @@ export default function ParticleBackground() {
         left: 0,
         width: '100%',
         height: '100%',
+        pointerEvents: 'none',
         zIndex: 0,
       }}
     />
