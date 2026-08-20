@@ -112,7 +112,6 @@ export default function Login() {
         </button>
       </div>
 
-      <div style={styles.footer}>© {new Date().getFullYear()} ver.1.0.0 by KursiHangat for Indofood</div>
     </div>
   );
 }
@@ -224,11 +223,5 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     width: '100%',
     marginTop: 15,
-  },
-  footer: {
-    color: COLORS.muted,
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 24,
   },
 };
