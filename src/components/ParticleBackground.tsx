@@ -1,12 +1,15 @@
 import { useEffect, useRef } from 'react';
 
-interface Particle {
+interface Node {
   x: number;
   y: number;
   vx: number;
   vy: number;
-  size: number;
+  radius: number;
   opacity: number;
+  angle: number;
+  speed: number;
+  orbit: number;
 }
 
 export default function ParticleBackground() {
@@ -20,75 +23,188 @@ export default function ParticleBackground() {
     if (!ctx) return;
 
     let animationId: number;
-    let particles: Particle[] = [];
+    let nodes: Node[] = [];
+    let mouseX = -1000;
+    let mouseY = -1000;
+    let mouseActive = false;
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     };
 
-    const createParticles = () => {
-      const count = Math.floor((canvas.width * canvas.height) / 8000);
-      particles = Array.from({ length: count }, () => ({
+    const createNodes = () => {
+      const count = Math.floor((canvas.width * canvas.height) / 12000);
+      nodes = Array.from({ length: count }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.4 + 0.1,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        radius: Math.random() * 2.5 + 1,
+        opacity: Math.random() * 0.5 + 0.15,
+        angle: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.005 + 0.002,
+        orbit: Math.random() * 30 + 10,
       }));
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      mouseActive = true;
+    };
+
+    const handleMouseLeave = () => {
+      mouseActive = false;
+    };
+
+    const drawWeb = (
+      x1: number, y1: number, x2: number, y2: number,
+      dist: number, maxDist: number, alpha: number
+    ) => {
+      const t = 1 - dist / maxDist;
+      const segments = 5;
+      const sag = t * 15;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+
+      for (let s = 1; s < segments; s++) {
+        const frac = s / segments;
+        const mx = x1 + (x2 - x1) * frac;
+        const my = y1 + (y2 - y1) * frac + sag * Math.sin(frac * Math.PI);
+        ctx.lineTo(mx, my);
+      }
+
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = `rgba(23, 107, 91, ${alpha * t})`;
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+    };
+
+    const drawRadialWeb = (x: number, y: number, alpha: number) => {
+      const spokes = 6;
+      const rings = 3;
+
+      for (let s = 0; s < spokes; s++) {
+        const angle = (s / spokes) * Math.PI * 2;
+        const endX = x + Math.cos(angle) * 60;
+        const endY = y + Math.sin(angle) * 60;
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = `rgba(23, 107, 91, ${alpha * 0.3})`;
+        ctx.lineWidth = 0.4;
+        ctx.stroke();
+
+        for (let r = 1; r <= rings; r++) {
+          const ringRadius = (r / rings) * 60;
+          const startAngle = (s / spokes) * Math.PI * 2;
+          const endAngle = ((s + 1) / spokes) * Math.PI * 2;
+
+          ctx.beginPath();
+          ctx.arc(x, y, ringRadius, startAngle, endAngle);
+          ctx.strokeStyle = `rgba(23, 107, 91, ${alpha * 0.2})`;
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
     };
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
+      // Update and draw nodes
+      nodes.forEach((n) => {
+        n.angle += n.speed;
 
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
+        const orbitX = Math.cos(n.angle) * n.orbit;
+        const orbitY = Math.sin(n.angle) * n.orbit;
+
+        n.x += n.vx;
+        n.y += n.vy;
+
+        if (mouseActive) {
+          const dx = mouseX - n.x;
+          const dy = mouseY - n.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 200 && dist > 0) {
+            const force = (200 - dist) / 200;
+            n.vx += (dx / dist) * force * 0.08;
+            n.vy += (dy / dist) * force * 0.08;
+          }
+        }
+
+        n.vx *= 0.98;
+        n.vy *= 0.98;
+
+        if (n.x < -50) n.x = canvas.width + 50;
+        if (n.x > canvas.width + 50) n.x = -50;
+        if (n.y < -50) n.y = canvas.height + 50;
+        if (n.y > canvas.height + 50) n.y = -50;
+
+        const drawX = n.x + orbitX;
+        const drawY = n.y + orbitY;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(23, 107, 91, ${p.opacity})`;
+        ctx.arc(drawX, drawY, n.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(23, 107, 91, ${n.opacity})`;
         ctx.fill();
       });
 
-      // Draw connections
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
+      // Draw web connections between nearby nodes
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const n1 = nodes[i];
+          const n2 = nodes[j];
+          const dx = n1.x - n2.x;
+          const dy = n1.y - n2.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
+          const maxDist = 100;
 
-          if (dist < 120) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(23, 107, 91, ${0.08 * (1 - dist / 120)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+          if (dist < maxDist) {
+            drawWeb(n1.x, n1.y, n2.x, n2.y, dist, maxDist, 0.12);
           }
         }
+      }
+
+      // Draw web to mouse
+      if (mouseActive) {
+        nodes.forEach((n) => {
+          const dx = mouseX - n.x;
+          const dy = mouseY - n.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 180) {
+            const alpha = (1 - dist / 180) * 0.25;
+            drawWeb(n.x, n.y, mouseX, mouseY, dist, 180, alpha);
+          }
+        });
+
+        // Draw radial web at mouse
+        drawRadialWeb(mouseX, mouseY, 0.6);
       }
 
       animationId = requestAnimationFrame(draw);
     };
 
     resize();
-    createParticles();
+    createNodes();
     draw();
 
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseleave', handleMouseLeave);
     window.addEventListener('resize', () => {
       resize();
-      createParticles();
+      createNodes();
     });
 
     return () => {
       cancelAnimationFrame(animationId);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('resize', resize);
     };
   }, []);
@@ -102,7 +218,6 @@ export default function ParticleBackground() {
         left: 0,
         width: '100%',
         height: '100%',
-        pointerEvents: 'none',
         zIndex: 0,
       }}
     />
