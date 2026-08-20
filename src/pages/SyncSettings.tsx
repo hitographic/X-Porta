@@ -102,7 +102,7 @@ export default function SyncSettings() {
       </div>
 
       <div style={styles.content}>
-        <h2 style={styles.sectionTitle}>Google Sheets / Drive</h2>
+        <h2 style={styles.sectionTitle}>Konfigurasi Data</h2>
         <p style={styles.description}>
           Konfigurasi server sudah tersedia di aplikasi. Data tetap tersimpan di server dan berpindah ketika salah satu tombol di bawah digunakan.
         </p>
