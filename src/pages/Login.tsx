@@ -61,14 +61,6 @@ export default function Login() {
 
         <div style={styles.card}>
           <div style={styles.cardInner}>
-            <div style={styles.iconWrap}>
-              <div style={styles.iconCircle}>
-                <UserRound size={22} color={COLORS.green} />
-              </div>
-            </div>
-
-            <div style={styles.title}>Masuk</div>
-
             <div style={styles.field}>
               <div style={{
                 ...styles.inputWrap,
@@ -149,10 +141,6 @@ export default function Login() {
               )}
             </button>
           </div>
-        </div>
-
-        <div style={styles.footer}>
-          Powered by <span style={{ fontWeight: 700 }}>KursiHangat</span> for Indofood
         </div>
       </div>
     </div>
