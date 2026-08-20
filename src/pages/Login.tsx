@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LockKeyhole, LogIn, UserRound } from 'lucide-react';
 import { apiService } from '../api/sync';
+import ParticleBackground from '../components/ParticleBackground';
 
 const COLORS = {
   ink: '#17212B',
@@ -45,9 +46,9 @@ export default function Login() {
 
   return (
     <div style={styles.container}>
+      <ParticleBackground />
       <div style={styles.brand}>
-        <img src="./logo.png" alt="X-Porta Logo" style={{ width: 120, height: 'auto', marginBottom: 12 }} />
-        <div style={styles.subtitle}>Masuk ke workspace laporan</div>
+        <img src="./logo.png" alt="X-Porta Logo" style={{ width: 240, height: 'auto', position: 'relative', zIndex: 1 }} />
       </div>
 
       <div style={styles.form}>
@@ -127,6 +128,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   brand: {
     marginBottom: 28,
+    display: 'flex',
+    justifyContent: 'center',
   },
   title: {
     color: COLORS.ink,
@@ -146,6 +149,9 @@ const styles: Record<string, React.CSSProperties> = {
     borderColor: COLORS.line,
     borderRadius: 8,
     padding: 20,
+    position: 'relative',
+    zIndex: 1,
+    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
   },
   formTitle: {
     color: COLORS.ink,

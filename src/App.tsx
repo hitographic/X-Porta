@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { apiService } from './api/sync';
 import Dashboard from './pages/Dashboard';
@@ -18,31 +18,36 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [session, setSession] = useState(apiService.getSession());
 
   useEffect(() => {
     setSession(apiService.getSession());
   }, [navigate]);
 
+  const isLogin = location.pathname === '/login';
+
   return (
     <div className="safe-area">
-      <header className="header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src="./logo.png" alt="X-Porta" style={{ height: 32, width: 'auto' }} />
-          <div className="subtitle">
-            PDQC-020 · {session ? 'WebApp Dashboard' : 'Login'}
+      {!isLogin && (
+        <header className="header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="./logo.png" alt="X-Porta" style={{ height: 32, width: 'auto' }} />
+            <div className="subtitle">
+              PDQC-020 · WebApp Dashboard
+            </div>
           </div>
-        </div>
-        {session && (
-          <button
-            className="icon-button"
-            aria-label="Pengaturan"
-            onClick={() => navigate('/sync')}
-          >
-            <Settings size={21} />
-          </button>
-        )}
-      </header>
+          {session && (
+            <button
+              className="icon-button"
+              aria-label="Pengaturan"
+              onClick={() => navigate('/sync')}
+            >
+              <Settings size={21} />
+            </button>
+          )}
+        </header>
+      )}
 
       <main className="body-content">
         <Routes>
