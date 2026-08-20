@@ -11,6 +11,7 @@ const COLORS = {
   paper: '#F5F7F8',
   white: '#FFFFFF',
   green: '#176B5B',
+  greenLight: '#1E8A76',
   greenSoft: '#E3F1EC',
   red: '#A33832',
 };
@@ -22,6 +23,7 @@ export default function Login() {
   const [secure, setSecure] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [focusField, setFocusField] = useState<string | null>(null);
 
   const login = async () => {
     if (!nik.trim() || !password) {
@@ -33,7 +35,7 @@ export default function Login() {
     try {
       const session = await apiService.login(nik, password);
       if (!session) {
-        setError('NIK atau password salah. Periksa kembali data di Google Sheets.');
+        setError('NIK atau password salah.');
         return;
       }
       navigate('/');
@@ -47,72 +49,112 @@ export default function Login() {
   return (
     <div style={styles.container}>
       <ParticleBackground />
-      <div style={styles.brand}>
-        <img src="./logo.png" alt="X-Porta Logo" style={{ width: 240, height: 'auto', position: 'relative', zIndex: 1 }} />
-      </div>
 
-      <div style={styles.form}>
-        <div style={styles.formTitle}>Login pengguna</div>
-        <div style={styles.formDescription}>
-          Gunakan NIK dan password yang terdaftar di Google Sheets.
+      <div style={styles.content}>
+        <div style={styles.brand}>
+          <img
+            src="./logo.png"
+            alt="X-Porta Logo"
+            style={{ width: 220, height: 'auto', position: 'relative', zIndex: 1 }}
+          />
         </div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>NIK</label>
-          <div style={styles.inputRow}>
-            <UserRound size={18} color={COLORS.muted} />
-            <input
-              type="text"
-              value={nik}
-              onChange={(e) => setNik(e.target.value)}
-              placeholder="Masukkan NIK"
-              autoCapitalize="none"
-              autoCorrect="off"
-              onKeyDown={(e) => e.key === 'Enter' && login()}
-              style={styles.input}
-            />
-          </div>
-        </div>
+        <div style={styles.card}>
+          <div style={styles.cardInner}>
+            <div style={styles.iconWrap}>
+              <div style={styles.iconCircle}>
+                <UserRound size={22} color={COLORS.green} />
+              </div>
+            </div>
 
-        <div style={styles.field}>
-          <label style={styles.label}>Password</label>
-          <div style={styles.inputRow}>
-            <LockKeyhole size={18} color={COLORS.muted} />
-            <input
-              type={secure ? 'password' : 'text'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Masukkan password"
-              autoCapitalize="none"
-              autoCorrect="off"
-              onKeyDown={(e) => e.key === 'Enter' && login()}
-              style={styles.input}
-            />
+            <div style={styles.title}>Masuk</div>
+
+            <div style={styles.field}>
+              <div style={{
+                ...styles.inputWrap,
+                borderColor: focusField === 'nik' ? COLORS.green : COLORS.line,
+                boxShadow: focusField === 'nik' ? '0 0 0 3px rgba(23, 107, 91, 0.1)' : 'none',
+              }}>
+                <UserRound size={17} color={focusField === 'nik' ? COLORS.green : COLORS.muted} />
+                <input
+                  type="text"
+                  value={nik}
+                  onChange={(e) => setNik(e.target.value)}
+                  onFocus={() => setFocusField('nik')}
+                  onBlur={() => setFocusField(null)}
+                  placeholder="NIK"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  onKeyDown={(e) => e.key === 'Enter' && login()}
+                  style={styles.input}
+                />
+              </div>
+            </div>
+
+            <div style={styles.field}>
+              <div style={{
+                ...styles.inputWrap,
+                borderColor: focusField === 'pw' ? COLORS.green : COLORS.line,
+                boxShadow: focusField === 'pw' ? '0 0 0 3px rgba(23, 107, 91, 0.1)' : 'none',
+              }}>
+                <LockKeyhole size={17} color={focusField === 'pw' ? COLORS.green : COLORS.muted} />
+                <input
+                  type={secure ? 'password' : 'text'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setFocusField('pw')}
+                  onBlur={() => setFocusField(null)}
+                  placeholder="Password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  onKeyDown={(e) => e.key === 'Enter' && login()}
+                  style={styles.input}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSecure(!secure)}
+                  style={styles.eye}
+                  aria-label={secure ? 'Tampilkan password' : 'Sembunyikan password'}
+                >
+                  {secure ? (
+                    <Eye size={17} color={COLORS.muted} />
+                  ) : (
+                    <EyeOff size={17} color={COLORS.muted} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div style={styles.error}>{error}</div>
+            )}
+
             <button
               type="button"
-              onClick={() => setSecure(!secure)}
-              style={styles.eye}
-              aria-label={secure ? 'Tampilkan password' : 'Sembunyikan password'}
+              disabled={busy}
+              onClick={login}
+              style={{
+                ...styles.submit,
+                opacity: busy ? 0.6 : 1,
+                background: busy ? COLORS.green : `linear-gradient(135deg, ${COLORS.green}, ${COLORS.greenLight})`,
+              }}
             >
-              {secure ? <Eye size={18} color={COLORS.muted} /> : <EyeOff size={18} color={COLORS.muted} />}
+              {busy ? (
+                <span style={styles.spinner} />
+              ) : (
+                <>
+                  <LogIn size={17} />
+                  Masuk
+                </>
+              )}
             </button>
           </div>
         </div>
 
-        {error && (
-          <div style={styles.error}>{error}</div>
-        )}
-
-        <button
-          type="button"
-          disabled={busy}
-          onClick={login}
-          style={{ ...styles.submit, ...(busy ? { opacity: 0.55 } : {}) }}
-        >
-          {busy ? 'Masuk...' : <><LogIn size={18} /> Masuk</>}
-        </button>
+        <div style={styles.footer}>
+          Powered by <span style={{ fontWeight: 700 }}>KursiHangat</span> for Indofood
+        </div>
       </div>
-
     </div>
   );
 }
@@ -121,71 +163,76 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
     display: 'flex',
-    flexDirection: 'column',
     justifyContent: 'center',
-    padding: '22px',
-    backgroundColor: COLORS.paper,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    position: 'relative',
   },
-  brand: {
-    marginBottom: 28,
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  title: {
-    color: COLORS.ink,
-    fontSize: 28,
-    fontWeight: 800,
-    marginTop: 6,
-  },
-  subtitle: {
-    color: COLORS.muted,
-    fontSize: 14,
-    marginTop: 5,
-  },
-  form: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: COLORS.line,
-    borderRadius: 8,
-    padding: 20,
+  content: {
     position: 'relative',
     zIndex: 1,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+    width: '100%',
+    maxWidth: 380,
+    padding: '0 20px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
-  formTitle: {
-    color: COLORS.ink,
-    fontSize: 20,
-    fontWeight: 800,
+  brand: {
+    marginBottom: 32,
+    display: 'flex',
+    justifyContent: 'center',
   },
-  formDescription: {
-    color: COLORS.muted,
-    fontSize: 13,
-    lineHeight: '19px',
-    marginTop: 6,
-    marginBottom: 22,
+  card: {
+    width: '100%',
+    background: 'rgba(255, 255, 255, 0.75)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    borderRadius: 16,
+    border: '1px solid rgba(255, 255, 255, 0.6)',
+    boxShadow: '0 8px 40px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04)',
+    overflow: 'hidden',
   },
-  field: {
+  cardInner: {
+    padding: '36px 28px 32px',
+  },
+  iconWrap: {
+    display: 'flex',
+    justifyContent: 'center',
     marginBottom: 16,
   },
-  label: {
-    color: COLORS.ink,
-    fontSize: 12,
-    fontWeight: 800,
-    marginBottom: 7,
-    display: 'block',
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: '50%',
+    background: COLORS.greenSoft,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  inputRow: {
-    height: 46,
+  title: {
+    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: 800,
+    color: COLORS.ink,
+    marginBottom: 28,
+  },
+  field: {
+    marginBottom: 14,
+  },
+  inputWrap: {
+    height: 48,
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: COLORS.line,
-    borderRadius: 6,
-    paddingLeft: 12,
-    paddingRight: 12,
+    borderRadius: 10,
+    paddingLeft: 14,
+    paddingRight: 14,
     display: 'flex',
     alignItems: 'center',
-    gap: 9,
+    gap: 10,
+    transition: 'all 0.2s ease',
+    backgroundColor: 'rgba(245, 247, 248, 0.5)',
   },
   input: {
     flex: 1,
@@ -195,39 +242,61 @@ const styles: Record<string, React.CSSProperties> = {
     border: 'none',
     outline: 'none',
     background: 'transparent',
+    fontWeight: 500,
   },
   eye: {
-    padding: 5,
+    padding: 4,
     background: 'none',
     border: 'none',
     cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   error: {
-    backgroundColor: '#FBEDEC',
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderStyle: 'solid',
-    borderColor: '#E9C7C4',
-    borderRadius: 6,
-    padding: 11,
+    borderColor: '#FECACA',
+    borderRadius: 10,
+    padding: '10px 14px',
     marginBottom: 14,
     color: COLORS.red,
     fontSize: 12,
     lineHeight: '17px',
+    fontWeight: 500,
   },
   submit: {
-    height: 46,
-    backgroundColor: COLORS.green,
-    borderRadius: 6,
+    height: 48,
+    borderRadius: 10,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
     color: COLORS.white,
-    fontWeight: 800,
+    fontWeight: 700,
     fontSize: 14,
     border: 'none',
     cursor: 'pointer',
     width: '100%',
-    marginTop: 15,
+    marginTop: 6,
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 12px rgba(23, 107, 91, 0.3)',
+    letterSpacing: 0.3,
+  },
+  spinner: {
+    width: 18,
+    height: 18,
+    border: '2px solid rgba(255,255,255,0.3)',
+    borderTopColor: '#fff',
+    borderRadius: '50%',
+    animation: 'spin 0.6s linear infinite',
+  },
+  footer: {
+    marginTop: 28,
+    color: COLORS.muted,
+    fontSize: 11,
+    textAlign: 'center',
+    opacity: 0.7,
   },
 };

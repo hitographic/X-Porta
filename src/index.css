@@ -1127,3 +1127,7 @@ body {
   border: 1px solid var(--color-line);
   color: var(--color-green);
 }
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
