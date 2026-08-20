@@ -90,6 +90,10 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
+      <footer style={{ padding: '16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 11, borderTop: '1px solid var(--color-line)' }}>
+        © {new Date().getFullYear()} ver.1.0.0 by KursiHangat for Indofood
+      </footer>
     </div>
   );
 }

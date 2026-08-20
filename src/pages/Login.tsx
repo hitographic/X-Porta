@@ -112,7 +112,7 @@ export default function Login() {
         </button>
       </div>
 
-      <div style={styles.footer}>PDQC-020 · WebApp Dashboard</div>
+      <div style={styles.footer}>© {new Date().getFullYear()} ver.1.0.0 by KursiHangat for Indofood</div>
     </div>
   );
 }
