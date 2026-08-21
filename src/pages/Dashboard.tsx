@@ -38,6 +38,7 @@ export default function Dashboard() {
 
   // Photo viewer
   const [photoReport, setPhotoReport] = useState<FinishedGoodsReport | null>(null);
+  const [savedMessage, setSavedMessage] = useState('');
 
   const loadData = async () => {
     setLoading(true);
@@ -146,6 +147,8 @@ export default function Dashboard() {
     try {
       await apiService.uploadReports([updated]);
       setReports(prev => prev.map(r => r.id === report.id ? updated : r));
+      setSavedMessage('Foto berhasil disimpan.');
+      setTimeout(() => setSavedMessage(''), 3000);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Gagal menyimpan foto.');
     }
@@ -172,6 +175,22 @@ export default function Dashboard() {
           <RefreshCw size={19} color="var(--color-green)" className={loading ? 'spin' : ''} />
         </button>
       </div>
+
+      {/* Success Notification */}
+      {savedMessage && (
+        <div style={{
+          padding: '12px 16px',
+          borderRadius: 6,
+          background: 'var(--color-green-soft)',
+          border: '1px solid var(--color-green)',
+          color: 'var(--color-green)',
+          fontSize: 13,
+          fontWeight: 700,
+          marginBottom: 14,
+        }}>
+          {savedMessage}
+        </div>
+      )}
 
       {/* Filter Panel */}
       {showFilters && (

@@ -25,10 +25,10 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
   };
 
   const handleSave = () => {
-    if (!selected) return;
     const updated = attachments.map((a, i) => i === selectedIndex ? { ...a, description } : a);
     setAttachments(updated);
     onSave(updated);
+    onClose();
   };
 
   const handleRetake = () => {
