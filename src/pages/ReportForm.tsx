@@ -6,7 +6,15 @@ import { ANALYSIS_PARAMETERS, createEmptyReport, REJECT_CRITERIA } from '../type
 import type { FinishedGoodsReport, ReportAttachment, ReportDraft, WorkflowStep } from '../types/report';
 import { processImageFile, canAddAttachment, getMaxAttachments } from '../utils/photos';
 
-const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'date' | 'number'; placeholder?: string }[] = [
+const SAMPLE_SIZE_OPTIONS = [2, 3, 5, 8, 13];
+
+function calculateAR(sampleSize: number): string {
+  if (sampleSize <= 3) return '0/1';
+  if (sampleSize <= 8) return '1/2';
+  return '2/3';
+}
+
+const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'number'; readOnly?: boolean }[] = [
   { key: 'reportNumber', label: 'Nomor laporan' },
   { key: 'flavour', label: 'Flavour' },
   { key: 'country', label: 'Negara' },
@@ -14,13 +22,12 @@ const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'date' | 'num
   { key: 'productionCode', label: 'Kode produksi' },
   { key: 'productionCodeDetail', label: 'Detail kode produksi' },
   { key: 'locationCode', label: 'Kode lokasi' },
-  { key: 'totalLot', label: 'Total lot' },
+  { key: 'totalLot', label: 'Total lot (karton)' },
   { key: 'totalLotPcs', label: 'Total lot (pcs)', type: 'number' },
-  { key: 'sampleSizePlan', label: 'Rencana sample size' },
-  { key: 'aqlPercentage', label: 'AQL (%)' },
-  { key: 'aqlAcceptReject', label: 'A/R (contoh: 2/3)', placeholder: '2/3' },
-  { key: 'halalPercentage', label: 'Pemeriksaan halal (%)' },
-  { key: 'analysisDate', label: 'Tanggal analisa', type: 'date' },
+  { key: 'aqlPercentage', label: 'AQL (%)', readOnly: true },
+  { key: 'aqlAcceptReject', label: 'A/R', readOnly: true },
+  { key: 'halalPercentage', label: 'Pemeriksaan halal (%)', readOnly: true },
+  { key: 'analysisDate', label: 'Tanggal analisa' },
   { key: 'inspectorName', label: 'Nama pemeriksa' },
   { key: 'approverName', label: 'Nama yang mengetahui' },
 ];
@@ -35,7 +42,10 @@ const TABS: { key: FormTab; label: string; step: WorkflowStep }[] = [
 ];
 
 function normalizeDraft(value: ReportDraft): ReportDraft {
-  const sampleSize = Math.min(13, Math.max(1, Number(value.sampleSize) || 1));
+  const validSizes = SAMPLE_SIZE_OPTIONS as unknown as number[];
+  const sampleSize = validSizes.includes(Number(value.sampleSize)) ? Number(value.sampleSize) : 13;
+  const sampleSizePlan = value.sampleSizePlan || String(sampleSize);
+  const aqlAcceptReject = value.aqlAcceptReject || calculateAR(sampleSize);
   const rejectResults = Object.fromEntries(REJECT_CRITERIA.map((criterion) => {
     const current = value.rejectResults?.[String(criterion.id)] ?? [];
     return [String(criterion.id), Array.from(
@@ -43,7 +53,7 @@ function normalizeDraft(value: ReportDraft): ReportDraft {
       (_, index) => typeof current[index] === 'boolean' ? current[index] : true,
     )];
   }));
-  return { ...value, sampleSize, workflowStep: value.workflowStep ?? 1, rejectResults };
+  return { ...value, sampleSize, sampleSizePlan, aqlAcceptReject, halalPercentage: value.halalPercentage || '100', aqlPercentage: value.aqlPercentage || '2,5', workflowStep: value.workflowStep ?? 1, rejectResults };
 }
 
 export default function ReportForm() {
@@ -70,6 +80,8 @@ export default function ReportForm() {
   const [attachments, setAttachments] = useState<ReportAttachment[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<ReportAttachment | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -105,6 +117,21 @@ export default function ReportForm() {
   const updateInfo = (key: keyof ReportDraft, value: string) => {
     update(key, value as never);
   };
+
+  const updateSampleSizeKarton = (value: number) => {
+    setDraft(current => ({ ...current, sampleSize: value, aqlAcceptReject: calculateAR(value) }));
+  };
+
+  const updateSampleSizePlan = (value: number) => {
+    setDraft(current => ({ ...current, sampleSizePlan: String(value) }));
+  };
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    const handleClickOutside = () => setOpenDropdown(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openDropdown]);
 
   const toggleSample = (criterionId: number, sampleIndex: number) => {
     setDraft(current => {
@@ -283,31 +310,99 @@ export default function ReportForm() {
               <div><strong>Shift {draft.shift}</strong><strong>Line {draft.line}</strong></div>
             </div>
 
-            {INFO_FIELDS.map(field => (
-              <div className="form-field" key={field.key}>
-                <label htmlFor={`field-${field.key}`}>{field.label}</label>
-                <input
-                  id={`field-${field.key}`}
-                  className="form-input"
-                  type={field.type ?? 'text'}
-                  value={String(draft[field.key] ?? '')}
-                  placeholder={field.placeholder}
-                  onChange={event => updateInfo(field.key, event.target.value)}
-                />
-              </div>
-            ))}
+            {INFO_FIELDS.map(field => {
+              if (field.key === 'analysisDate') {
+                return (
+                  <div className="form-field" key={field.key}>
+                    <label>{field.label}</label>
+                    <button
+                      type="button"
+                      className="form-input form-input-clickable"
+                      onClick={() => setShowDatePicker(true)}
+                    >
+                      <span className={!draft.analysisDate ? 'placeholder-text' : ''}>
+                        {draft.analysisDate || 'Pilih tanggal (YYYY-MM-DD)'}
+                      </span>
+                    </button>
+                  </div>
+                );
+              }
+
+              const isReadOnly = field.readOnly;
+              let displayValue = String(draft[field.key] ?? '');
+              if (field.key === 'aqlPercentage') displayValue = '2,5';
+              else if (field.key === 'halalPercentage') displayValue = '100';
+              else if (field.key === 'aqlAcceptReject') displayValue = draft.aqlAcceptReject || calculateAR(draft.sampleSize);
+
+              return (
+                <div className="form-field" key={field.key}>
+                  <label htmlFor={`field-${field.key}`}>{field.label}</label>
+                  <input
+                    id={`field-${field.key}`}
+                    className={`form-input ${isReadOnly ? 'readonly' : ''}`}
+                    type={field.type ?? 'text'}
+                    value={displayValue}
+                    readOnly={isReadOnly}
+                    onChange={isReadOnly ? undefined : event => updateInfo(field.key, event.target.value)}
+                  />
+                </div>
+              );
+            })}
 
             <div className="form-field">
-              <label htmlFor="sample-size">Jumlah sampel (maks. 13)</label>
-              <input
-                id="sample-size"
-                className="form-input"
-                type="number"
-                min="1"
-                max="13"
-                value={draft.sampleSize}
-                onChange={event => update('sampleSize', Math.min(13, Math.max(1, Number(event.target.value) || 1)))}
-              />
+              <label>Jumlah sampel (karton)</label>
+              <div className="custom-dropdown">
+                <button
+                  type="button"
+                  className="form-input form-input-clickable dropdown-trigger"
+                  onClick={e => { e.stopPropagation(); setOpenDropdown(openDropdown === 'sampleSizeKarton' ? null : 'sampleSizeKarton'); }}
+                >
+                  <span>{draft.sampleSize}</span>
+                  <ChevronDown size={16} />
+                </button>
+                {openDropdown === 'sampleSizeKarton' && (
+                  <div className="dropdown-menu">
+                    {SAMPLE_SIZE_OPTIONS.map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        className={`dropdown-item ${String(opt) === String(draft.sampleSize) ? 'active' : ''}`}
+                        onClick={() => { updateSampleSizeKarton(opt); setOpenDropdown(null); }}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="form-field">
+              <label>Jumlah sampel (pcs)</label>
+              <div className="custom-dropdown">
+                <button
+                  type="button"
+                  className="form-input form-input-clickable dropdown-trigger"
+                  onClick={e => { e.stopPropagation(); setOpenDropdown(openDropdown === 'sampleSizePcs' ? null : 'sampleSizePcs'); }}
+                >
+                  <span>{draft.sampleSizePlan || String(draft.sampleSize)}</span>
+                  <ChevronDown size={16} />
+                </button>
+                {openDropdown === 'sampleSizePcs' && (
+                  <div className="dropdown-menu">
+                    {SAMPLE_SIZE_OPTIONS.map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        className={`dropdown-item ${String(opt) === String(draft.sampleSizePlan || draft.sampleSize) ? 'active' : ''}`}
+                        onClick={() => { updateSampleSizePlan(opt); setOpenDropdown(null); }}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         )}
@@ -516,6 +611,24 @@ export default function ReportForm() {
           </button>
         </div>
       </div>
+
+      {showDatePicker && (
+        <div className="modal-overlay" onClick={() => setShowDatePicker(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 className="modal-title">Pilih Tanggal</h3>
+              <button type="button" onClick={() => setShowDatePicker(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-ink)', fontSize: 13, fontWeight: 800 }}>Batal</button>
+            </div>
+            <input
+              type="date"
+              className="form-input"
+              value={draft.analysisDate || ''}
+              onChange={e => { update('analysisDate', e.target.value); setShowDatePicker(false); }}
+              style={{ fontSize: 16 }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

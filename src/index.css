@@ -536,6 +536,71 @@ body {
   border-color: var(--color-green);
 }
 
+.form-input.readonly {
+  background-color: var(--color-paper);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.form-input-clickable {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
+.placeholder-text {
+  color: var(--color-muted);
+}
+
+.custom-dropdown {
+  position: relative;
+}
+
+.dropdown-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 20;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.dropdown-item:hover {
+  background: var(--color-paper);
+}
+
+.dropdown-item.active {
+  background: var(--color-green-soft);
+  color: var(--color-green);
+  font-weight: 800;
+}
+
 /* Dashboard pagination */
 .pagination {
   height: 42px;
