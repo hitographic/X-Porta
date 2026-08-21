@@ -21,8 +21,9 @@ const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'number'; rea
   { key: 'productionCode', label: 'Kode produksi' },
   { key: 'productionCodeDetail', label: 'Detail kode produksi' },
   { key: 'locationCode', label: 'Kode lokasi' },
-  { key: 'totalLot', label: 'Total lot (karton)' },
-  { key: 'totalLotPcs', label: 'Total lot (pcs)', type: 'number' },
+];
+
+const INFO_FIELDS_BOTTOM: { key: keyof ReportDraft; label: string; type?: 'number'; readOnly?: boolean }[] = [
   { key: 'aqlPercentage', label: 'AQL (%)', readOnly: true },
   { key: 'aqlAcceptReject', label: 'A/R', readOnly: true },
   { key: 'halalPercentage', label: 'Pemeriksaan halal (%)', readOnly: true },
@@ -275,29 +276,8 @@ export default function ReportForm() {
             </div>
 
             {INFO_FIELDS.map(field => {
-              if (field.key === 'analysisDate') {
-                return (
-                  <div className="form-field" key={field.key}>
-                    <label>{field.label}</label>
-                    <button
-                      type="button"
-                      className="form-input form-input-clickable"
-                      onClick={() => setShowDatePicker(true)}
-                    >
-                      <span className={!draft.analysisDate ? 'placeholder-text' : ''}>
-                        {draft.analysisDate || 'Pilih tanggal (YYYY-MM-DD)'}
-                      </span>
-                    </button>
-                  </div>
-                );
-              }
-
               const isReadOnly = field.readOnly;
               let displayValue = String(draft[field.key] ?? '');
-              if (field.key === 'aqlPercentage') displayValue = '2,5';
-              else if (field.key === 'halalPercentage') displayValue = '100';
-              else if (field.key === 'aqlAcceptReject') displayValue = draft.aqlAcceptReject || calculateAR(draft.sampleSize);
-
               return (
                 <div className="form-field" key={field.key}>
                   <label htmlFor={`field-${field.key}`}>{field.label}</label>
@@ -312,6 +292,32 @@ export default function ReportForm() {
                 </div>
               );
             })}
+
+            <div className="form-field">
+              <label htmlFor="field-totalLot">Total lot (karton)</label>
+              <input
+                id="field-totalLot"
+                className="form-input"
+                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={draft.totalLot}
+                onChange={event => updateInfo('totalLot', event.target.value)}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="field-totalLotPcs">Total lot (pcs)</label>
+              <input
+                id="field-totalLotPcs"
+                className="form-input"
+                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={draft.totalLotPcs}
+                onChange={event => updateInfo('totalLotPcs', event.target.value)}
+              />
+            </div>
 
             <div className="form-field">
               <label>Jumlah sampel (karton)</label>
@@ -368,6 +374,45 @@ export default function ReportForm() {
                 )}
               </div>
             </div>
+
+            {INFO_FIELDS_BOTTOM.map(field => {
+              if (field.key === 'analysisDate') {
+                return (
+                  <div className="form-field" key={field.key}>
+                    <label>{field.label}</label>
+                    <button
+                      type="button"
+                      className="form-input form-input-clickable"
+                      onClick={() => setShowDatePicker(true)}
+                    >
+                      <span className={!draft.analysisDate ? 'placeholder-text' : ''}>
+                        {draft.analysisDate || 'Pilih tanggal (YYYY-MM-DD)'}
+                      </span>
+                    </button>
+                  </div>
+                );
+              }
+
+              const isReadOnly = field.readOnly;
+              let displayValue = String(draft[field.key] ?? '');
+              if (field.key === 'aqlPercentage') displayValue = '2,5';
+              else if (field.key === 'halalPercentage') displayValue = '100';
+              else if (field.key === 'aqlAcceptReject') displayValue = draft.aqlAcceptReject || calculateAR(draft.sampleSize);
+
+              return (
+                <div className="form-field" key={field.key}>
+                  <label htmlFor={`field-${field.key}`}>{field.label}</label>
+                  <input
+                    id={`field-${field.key}`}
+                    className={`form-input ${isReadOnly ? 'readonly' : ''}`}
+                    type={field.type ?? 'text'}
+                    value={displayValue}
+                    readOnly={isReadOnly}
+                    onChange={isReadOnly ? undefined : event => updateInfo(field.key, event.target.value)}
+                  />
+                </div>
+              );
+            })}
           </section>
         )}
 
