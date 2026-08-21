@@ -6,7 +6,7 @@ import { processImageFile, canAddAttachment, getMaxAttachments } from '../utils/
 interface PhotoViewerModalProps {
   attachments: ReportAttachment[];
   onClose: () => void;
-  onSave: (attachments: ReportAttachment[]) => void;
+  onSave: (attachments: ReportAttachment[]) => Promise<void> | void;
 }
 
 export default function PhotoViewerModal({ attachments: initialAttachments, onClose, onSave }: PhotoViewerModalProps) {
@@ -14,6 +14,7 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [description, setDescription] = useState(initialAttachments[0]?.description ?? '');
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const retakeInputRef = useRef<HTMLInputElement>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,11 +25,16 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
     setDescription(attachments[index]?.description ?? '');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const updated = attachments.map((a, i) => i === selectedIndex ? { ...a, description } : a);
     setAttachments(updated);
-    onSave(updated);
-    onClose();
+    setSaving(true);
+    try {
+      await onSave(updated);
+      onClose();
+    } catch {
+      setSaving(false);
+    }
   };
 
   const handleRetake = () => {
@@ -149,8 +155,8 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
               <button type="button" className="pv-btn secondary" disabled={uploading} onClick={handleRetake}>
                 <RotateCcw size={16} /> Retake
               </button>
-              <button type="button" className="pv-btn secondary" onClick={handleSave}>
-                <Save size={16} /> Simpan
+              <button type="button" className="pv-btn secondary" disabled={saving} onClick={handleSave}>
+                <Save size={16} /> {saving ? 'Menyimpan...' : 'Simpan'}
               </button>
               <button type="button" className="pv-btn danger" onClick={handleDelete}>
                 <Trash2 size={16} /> Hapus
@@ -168,6 +174,15 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
           <ImagePlus size={16} /> {uploading ? 'Memproses...' : 'Tambah foto'}
         </button>
       </div>
+
+      {saving && (
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="pv-loading-popup">
+            <div className="pv-spinner" />
+            <p>Menyimpan foto...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
