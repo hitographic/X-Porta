@@ -14,7 +14,8 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [description, setDescription] = useState(initialAttachments[0]?.description ?? '');
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const retakeInputRef = useRef<HTMLInputElement>(null);
+  const addInputRef = useRef<HTMLInputElement>(null);
 
   const selected = attachments[selectedIndex] ?? null;
 
@@ -31,10 +32,10 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
   };
 
   const handleRetake = () => {
-    fileInputRef.current?.click();
+    retakeInputRef.current?.click();
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRetakeFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
@@ -48,7 +49,7 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
       alert('Gagal memproses gambar.');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (retakeInputRef.current) retakeInputRef.current.value = '';
     }
   };
 
@@ -63,7 +64,7 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
   };
 
   const handleAddPhoto = () => {
-    fileInputRef.current?.click();
+    addInputRef.current?.click();
   };
 
   const handleAddFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +86,7 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
       alert('Gagal memproses gambar.');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (addInputRef.current) addInputRef.current.value = '';
     }
   };
 
@@ -93,10 +94,17 @@ export default function PhotoViewerModal({ attachments: initialAttachments, onCl
     <div className="modal-overlay" onClick={onClose}>
       <div className="photo-viewer-modal" onClick={e => e.stopPropagation()}>
         <input
-          ref={fileInputRef}
+          ref={retakeInputRef}
           type="file"
           accept="image/*"
-          onChange={selected ? handleFileChange : handleAddFileChange}
+          onChange={handleRetakeFileChange}
+          style={{ display: 'none' }}
+        />
+        <input
+          ref={addInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAddFileChange}
           style={{ display: 'none' }}
         />
 
