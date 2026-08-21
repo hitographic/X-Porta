@@ -22,6 +22,8 @@ export default function Dashboard() {
   const [filterLine, setFilterLine] = useState('');
   const [filterYear, setFilterYear] = useState('');
   const [filterStatus, setFilterStatus] = useState<'' | 'draft' | 'completed'>('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
 
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -63,6 +65,8 @@ export default function Dashboard() {
     setFilterLine('');
     setFilterYear('');
     setFilterStatus('');
+    setFilterDateFrom('');
+    setFilterDateTo('');
   };
 
   const filteredReports = useMemo(() => {
@@ -80,10 +84,13 @@ export default function Dashboard() {
       const matchLine = filterLine ? String(r.line) === filterLine : true;
       const matchStatus = filterStatus ? r.status === filterStatus : true;
       const matchYear = filterYear ? (r.analysisDate || '').startsWith(filterYear) : true;
+      const date = r.analysisDate || '';
+      const matchDateFrom = filterDateFrom ? date >= filterDateFrom : true;
+      const matchDateTo = filterDateTo ? date <= filterDateTo : true;
 
-      return matchSearch && matchOqc && matchShift && matchLine && matchStatus && matchYear;
+      return matchSearch && matchOqc && matchShift && matchLine && matchStatus && matchYear && matchDateFrom && matchDateTo;
     });
-  }, [reports, search, filterOqc, filterShift, filterLine, filterStatus, filterYear]);
+  }, [reports, search, filterOqc, filterShift, filterLine, filterStatus, filterYear, filterDateFrom, filterDateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filteredReports.length / pageSize));
   const paginatedReports = useMemo(
@@ -93,7 +100,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setPage(1);
-  }, [search, filterOqc, filterShift, filterLine, filterStatus, filterYear]);
+  }, [search, filterOqc, filterShift, filterLine, filterStatus, filterYear, filterDateFrom, filterDateTo]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
@@ -200,6 +207,17 @@ export default function Dashboard() {
             <div className="filter-field">
               <span className="filter-label">Tahun</span>
               <input type="text" className="filter-input" placeholder="2026" value={filterYear} onChange={(e) => setFilterYear(e.target.value.replace(/[^0-9]/g, '').slice(0, 4))} />
+            </div>
+          </div>
+
+          <div className="filter-inputs">
+            <div className="filter-field">
+              <span className="filter-label">Tanggal dari</span>
+              <input type="date" className="filter-input" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} />
+            </div>
+            <div className="filter-field">
+              <span className="filter-label">Tanggal sampai</span>
+              <input type="date" className="filter-input" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} />
             </div>
           </div>
 
