@@ -48,7 +48,7 @@ function normalizeDraft(value: ReportDraft): ReportDraft {
     const current = value.rejectResults?.[String(criterion.id)] ?? [];
     return [String(criterion.id), Array.from(
       { length: criterion.sampleCount },
-      (_, index) => typeof current[index] === 'boolean' ? current[index] : true,
+      (_, index) => typeof current[index] === 'boolean' || current[index] === null ? current[index] : true,
     )];
   }));
   return { ...value, sampleSize, sampleSizePlan, aqlAcceptReject, halalPercentage: value.halalPercentage || '100', aqlPercentage: value.aqlPercentage || '2,5', workflowStep: value.workflowStep ?? 1, rejectResults };
@@ -129,17 +129,20 @@ export default function ReportForm() {
     setDraft(current => {
       const key = String(criterionId);
       const values = current.rejectResults[key] ?? [];
+      const next = values.map((value, index) => {
+        if (index !== sampleIndex) return value;
+        if (value === true) return false;
+        if (value === false) return null;
+        return true;
+      });
       return {
         ...current,
-        rejectResults: {
-          ...current.rejectResults,
-          [key]: values.map((value, index) => index === sampleIndex ? !value : value),
-        },
+        rejectResults: { ...current.rejectResults, [key]: next },
       };
     });
   };
 
-  const setAllSamples = (criterionId: number, value: boolean) => {
+  const setAllSamples = (criterionId: number, value: boolean | null) => {
     setDraft(current => {
       const key = String(criterionId);
       const values = current.rejectResults[key] ?? [];
@@ -437,11 +440,12 @@ export default function ReportForm() {
                         <div className="quick-actions">
                           <button type="button" onClick={() => setAllSamples(criterion.id, true)}><Check size={15} /> Semua sesuai</button>
                           <button type="button" className="reject-action" onClick={() => setAllSamples(criterion.id, false)}><X size={15} /> Semua reject</button>
+                          <button type="button" className="empty-action" onClick={() => setAllSamples(criterion.id, null)}>Semua kosong</button>
                         </div>
                         <div className="sample-grid">
                           {values.map((value, index) => index < draft.sampleSize && (
-                            <button type="button" key={index} onClick={() => toggleSample(criterion.id, index)} className={`sample-button ${value ? 'good' : 'bad'}`} aria-label={`Sampel ${index + 1}: ${value ? 'sesuai' : 'reject'}`}>
-                              <span>{index + 1}</span>{value ? <Check size={15} /> : <X size={15} />}
+                            <button type="button" key={index} onClick={() => toggleSample(criterion.id, index)} className={`sample-button ${value === true ? 'good' : value === false ? 'bad' : 'empty'}`} aria-label={`Sampel ${index + 1}: ${value === true ? 'sesuai' : value === false ? 'reject' : 'kosong'}`}>
+                              <span>{index + 1}</span>{value === true ? <Check size={15} /> : value === false ? <X size={15} /> : null}
                             </button>
                           ))}
                         </div>

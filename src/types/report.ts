@@ -61,7 +61,7 @@ export interface FinishedGoodsReport {
     conclusion: Conclusion;
     inspectorName: string;
     approverName: string;
-    rejectResults: Record<string, boolean[]>;
+    rejectResults: Record<string, (boolean | null)[]>;
     analysisResults: Record<string, string>;
     createdAt: string;
     updatedAt: string;

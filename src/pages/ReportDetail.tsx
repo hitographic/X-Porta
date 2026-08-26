@@ -169,13 +169,13 @@ export default function ReportDetail() {
                           justifyContent: 'space-between',
                           fontWeight: 800,
                           fontSize: 11,
-                          color: value ? COLORS.green : COLORS.red,
-                          border: `1px solid ${value ? COLORS.green : COLORS.red}`,
-                          backgroundColor: value ? COLORS.greenSoft : COLORS.redSoft,
+                          color: value === true ? COLORS.green : value === false ? COLORS.red : COLORS.muted,
+                          border: `1px ${value === null ? 'dashed' : 'solid'} ${value === true ? COLORS.green : value === false ? COLORS.red : COLORS.muted}`,
+                          backgroundColor: value === true ? COLORS.greenSoft : value === false ? COLORS.redSoft : COLORS.white,
                         }}
                       >
                         <span>{index + 1}</span>
-                        {value ? <Check size={15} /> : <X size={15} />}
+                        {value === true ? <Check size={15} /> : value === false ? <X size={15} /> : null}
                       </div>
                     ))}
                   </div>
