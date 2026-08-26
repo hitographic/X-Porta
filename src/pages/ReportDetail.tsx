@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronDown, ChevronUp, Edit, FileText, Image, X } from 'lucide-react';
 import { apiService } from '../api/sync';
-import { ANALYSIS_PARAMETERS, calculateAcceptRejectStatus, calculateSampleRejects, REJECT_CRITERIA } from '../types/report';
+import { ANALYSIS_PARAMETERS, calculateAcceptRejectStatus, calculateSampleRejects, isRejected, REJECT_CRITERIA } from '../types/report';
 import type { FinishedGoodsReport, ReportAttachment } from '../types/report';
 import { exportReportPdf } from '../utils/export';
 import { format } from 'date-fns';
@@ -169,13 +169,13 @@ export default function ReportDetail() {
                           justifyContent: 'space-between',
                           fontWeight: 800,
                           fontSize: 11,
-                          color: value === true ? COLORS.green : value === false ? COLORS.red : COLORS.muted,
-                          border: `1px ${value === null ? 'dashed' : 'solid'} ${value === true ? COLORS.green : value === false ? COLORS.red : COLORS.muted}`,
-                          backgroundColor: value === true ? COLORS.greenSoft : value === false ? COLORS.redSoft : COLORS.white,
+                          color: value === true ? COLORS.green : isRejected(value) ? COLORS.red : COLORS.muted,
+                          border: `1px ${value === null ? 'dashed' : 'solid'} ${value === true ? COLORS.green : isRejected(value) ? COLORS.red : COLORS.muted}`,
+                          backgroundColor: value === true ? COLORS.greenSoft : isRejected(value) ? COLORS.redSoft : COLORS.white,
                         }}
                       >
                         <span>{index + 1}</span>
-                        {value === true ? <Check size={15} /> : value === false ? <X size={15} /> : null}
+                        {value === true ? <Check size={15} /> : isRejected(value) ? <X size={15} /> : null}
                       </div>
                     ))}
                   </div>

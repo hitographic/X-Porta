@@ -1,4 +1,4 @@
-import { ANALYSIS_PARAMETERS, calculateAcceptRejectStatus, calculateSampleRejects, FORM_META, REJECT_CRITERIA } from '../types/report';
+import { ANALYSIS_PARAMETERS, calculateAcceptRejectStatus, calculateSampleRejects, FORM_META, REJECT_CRITERIA, isRejected } from '../types/report';
 import type { FinishedGoodsReport } from '../types/report';
 
 const escapeHtml = (value: unknown) => String(value ?? '')
@@ -18,10 +18,10 @@ function rejectRows(report: FinishedGoodsReport, activeSamples: number): string 
             : '';
         previousCategory = criterion.category;
         const sampleResults = criterion.sampleCount === 1
-            ? `<td class="sample merged-sample" colspan="13">${results[0] === false ? 'X' : results[0] === true ? '✓' : ''}</td>`
+            ? `<td class="sample merged-sample" colspan="13">${isRejected(results[0]) ? 'X' : results[0] === true ? '✓' : ''}</td>`
             : Array.from({ length: 13 }, (_, index) => {
                 if (index >= activeSamples || index >= criterion.sampleCount) return cell('', 'sample inactive-sample');
-                return cell(results[index] === false ? 'X' : results[index] === true ? '✓' : '', 'sample');
+                return cell(isRejected(results[index]) ? 'X' : results[index] === true ? '✓' : '', 'sample');
             }).join('');
         return `${categoryRow}<tr>${cell(`${criterion.id}.`, 'number')}${cell(criterion.name, 'criterion-name')}${cell(criterion.standard, 'standard')}${sampleResults}</tr>`;
     }).join('');

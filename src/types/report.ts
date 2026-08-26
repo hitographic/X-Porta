@@ -131,9 +131,18 @@ export const ANALYSIS_PARAMETERS: AnalysisParameter[] = [
     { id: 31, key: 'product_integrity', name: 'Keutuhan produk', standard: 'Min. 95 %', monitoringOnly: true },
 ];
 
+export function isRejected(value: unknown): boolean {
+    if (value === false) return true;
+    if (typeof value === 'string') {
+        const lower = value.trim().toLowerCase();
+        return lower === 'false' || lower === '0' || lower === 'x';
+    }
+    return false;
+}
+
 export function calculateSampleRejects(report: Pick<FinishedGoodsReport, 'rejectResults'>): number[] {
     return Array.from({ length: 13 }, (_, sampleIndex) => REJECT_CRITERIA.reduce(
-        (total, criterion) => total + (report.rejectResults[String(criterion.id)]?.[sampleIndex] === false ? 1 : 0),
+        (total, criterion) => total + (isRejected(report.rejectResults[String(criterion.id)]?.[sampleIndex]) ? 1 : 0),
         0,
     ));
 }
@@ -141,7 +150,7 @@ export function calculateSampleRejects(report: Pick<FinishedGoodsReport, 'reject
 export function calculateAcceptRejectStatus(
     rejects: number[],
     sampleSize: number,
-    aqlAcceptReject: string,
+    _aqlAcceptReject: string,
 ): string[] {
     return rejects.map((count, index) => index < sampleSize ? (count > 0 ? 'R' : 'A') : '');
 }

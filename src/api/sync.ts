@@ -1,4 +1,5 @@
 import type { FinishedGoodsReport, ReportAttachment, SyncEnvelope } from '../types/report';
+import { REJECT_CRITERIA } from '../types/report';
 import { savePhotos } from '../utils/photoStorage';
 
 const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbxyhnub36943ZHN8O1i2YE3_qChD6EvllAjnPbCGgB3waNJhYxF4Zn6LUQFz30bxUC98w/exec';
@@ -46,7 +47,23 @@ function mergePhotosFromDrive(report: FinishedGoodsReport): FinishedGoodsReport 
         }
         return att;
     });
-    return { ...report, attachments: merged };
+
+    const normalizedRejectResults: Record<string, (boolean | null)[]> = {};
+    for (const criterion of REJECT_CRITERIA) {
+        const key = String(criterion.id);
+        const raw = report.rejectResults?.[key];
+        if (!Array.isArray(raw)) {
+            normalizedRejectResults[key] = Array(criterion.sampleCount).fill(true);
+        } else {
+            normalizedRejectResults[key] = raw.map((v: unknown) =>
+                v === true ? true : v === false ? false : v === null ? null :
+                typeof v === 'string' ? (v.trim().toLowerCase() === 'false' || v.trim().toLowerCase() === '0' ? false : v.trim() === '' ? null : true) :
+                true
+            );
+        }
+    }
+
+    return { ...report, attachments: merged, rejectResults: normalizedRejectResults };
 }
 
 export const apiService = {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, LockKeyhole, Save, X } from 'lucide-react';
 import { apiService } from '../api/sync';
-import { ANALYSIS_PARAMETERS, createEmptyReport, REJECT_CRITERIA } from '../types/report';
+import { ANALYSIS_PARAMETERS, createEmptyReport, isRejected, REJECT_CRITERIA } from '../types/report';
 import type { FinishedGoodsReport, ReportDraft, WorkflowStep } from '../types/report';
 
 const SAMPLE_SIZE_OPTIONS = [2, 3, 5, 8, 13];
@@ -444,8 +444,8 @@ export default function ReportForm() {
                         </div>
                         <div className="sample-grid">
                           {values.map((value, index) => index < draft.sampleSize && (
-                            <button type="button" key={index} onClick={() => toggleSample(criterion.id, index)} className={`sample-button ${value === true ? 'good' : value === false ? 'bad' : 'empty'}`} aria-label={`Sampel ${index + 1}: ${value === true ? 'sesuai' : value === false ? 'reject' : 'kosong'}`}>
-                              <span>{index + 1}</span>{value === true ? <Check size={15} /> : value === false ? <X size={15} /> : null}
+                            <button type="button" key={index} onClick={() => toggleSample(criterion.id, index)} className={`sample-button ${value === true ? 'good' : isRejected(value) ? 'bad' : 'empty'}`} aria-label={`Sampel ${index + 1}: ${value === true ? 'sesuai' : isRejected(value) ? 'reject' : 'kosong'}`}>
+                              <span>{index + 1}</span>{value === true ? <Check size={15} /> : isRejected(value) ? <X size={15} /> : null}
                             </button>
                           ))}
                         </div>
