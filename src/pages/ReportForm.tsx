@@ -19,7 +19,6 @@ const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'number'; rea
   { key: 'country', label: 'Negara' },
   { key: 'distributor', label: 'Distributor' },
   { key: 'productionCode', label: 'Kode produksi' },
-  { key: 'productionCodeDetail', label: 'Detail kode produksi' },
   { key: 'locationCode', label: 'Kode lokasi' },
 ];
 
@@ -395,7 +394,7 @@ export default function ReportForm() {
 
               const isReadOnly = field.readOnly;
               let displayValue = String(draft[field.key] ?? '');
-              if (field.key === 'aqlPercentage') displayValue = '2,5';
+              if (field.key === 'aqlPercentage') displayValue = '6,5';
               else if (field.key === 'halalPercentage') displayValue = '100';
               else if (field.key === 'aqlAcceptReject') displayValue = draft.aqlAcceptReject || calculateAR(draft.sampleSize);
 
