@@ -146,10 +146,18 @@ export function calculateAcceptRejectStatus(
     return rejects.map((count, index) => index < sampleSize ? (count > threshold ? 'R' : 'A') : '');
 }
 
-export function createEmptyReport(): ReportDraft {
+export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft {
     const today = new Date().toISOString().slice(0, 10);
+    const uncheckedIds = new Set<number>();
+    if (oqcType !== 'OQC Sticker') {
+        uncheckedIds.add(7);
+        uncheckedIds.add(18);
+    }
     const rejectResults = Object.fromEntries(
-        REJECT_CRITERIA.map((criterion) => [String(criterion.id), Array(criterion.sampleCount).fill(true)]),
+        REJECT_CRITERIA.map((criterion) => [
+            String(criterion.id),
+            Array(criterion.sampleCount).fill(!uncheckedIds.has(criterion.id)),
+        ]),
     );
     const analysisResults = Object.fromEntries(ANALYSIS_PARAMETERS.map((parameter) => [parameter.key, '']));
 
