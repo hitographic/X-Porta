@@ -143,8 +143,7 @@ export function calculateAcceptRejectStatus(
     sampleSize: number,
     aqlAcceptReject: string,
 ): string[] {
-    const threshold = Number((aqlAcceptReject || '').split('/')[0]) || 0;
-    return rejects.map((count, index) => index < sampleSize ? (count > threshold ? 'R' : 'A') : '');
+    return rejects.map((count, index) => index < sampleSize ? (count > 0 ? 'R' : 'A') : '');
 }
 
 export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft {
