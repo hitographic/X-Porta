@@ -156,7 +156,7 @@ export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft
     const rejectResults = Object.fromEntries(
         REJECT_CRITERIA.map((criterion) => [
             String(criterion.id),
-            Array(criterion.sampleCount).fill(!uncheckedIds.has(criterion.id)),
+            Array(criterion.sampleCount).fill(uncheckedIds.has(criterion.id) ? null : true),
         ]),
     );
     const analysisResults = Object.fromEntries(ANALYSIS_PARAMETERS.map((parameter) => [parameter.key, '']));
