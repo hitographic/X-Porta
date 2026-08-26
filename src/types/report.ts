@@ -34,6 +34,7 @@ export interface AnalysisParameter {
     name: string;
     standard: string;
     note?: string;
+    monitoringOnly?: boolean;
 }
 
 export interface FinishedGoodsReport {
@@ -124,10 +125,10 @@ export const ANALYSIS_PARAMETERS: AnalysisParameter[] = [
     { id: 25, key: 'organoleptic_seasoning', name: 'Organoleptik bumbu / cabe / solid ingredient / bawang goreng *', standard: 'Min. 6' },
     { id: 26, key: 'organoleptic_oil', name: 'Organoleptik minyak bumbu / kecap / sambal pasta *', standard: 'Min. 6' },
     { id: 27, key: 'moisture_noodle', name: 'Kadar air mi', standard: '' },
-    { id: 28, key: 'moisture_seasoning', name: 'Kadar air bumbu / cabe / solid ingredient / bawang goreng *', standard: '' },
-    { id: 29, key: 'moisture_oil', name: 'Kadar air minyak bumbu / kecap / sambal pasta *', standard: '' },
+    { id: 28, key: 'moisture_seasoning', name: 'Kadar air bumbu / cabe / solid ingredient / bawang goreng *', standard: '', monitoringOnly: true },
+    { id: 29, key: 'moisture_oil', name: 'Kadar air minyak bumbu / kecap / sambal pasta *', standard: '', monitoringOnly: true },
     { id: 30, key: 'av_ffa', name: 'AV mi / FFA minyak bumbu', standard: '' },
-    { id: 31, key: 'product_integrity', name: 'Keutuhan produk', standard: 'Min. 95 %' },
+    { id: 31, key: 'product_integrity', name: 'Keutuhan produk', standard: 'Min. 95 %', monitoringOnly: true },
 ];
 
 export function calculateSampleRejects(report: Pick<FinishedGoodsReport, 'rejectResults'>): number[] {

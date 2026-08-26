@@ -461,19 +461,24 @@ export default function ReportForm() {
         {tab === 'analysis' && (
           <section>
             <h2 className="form-section-title">Organoleptik dan kimia</h2>
-            {ANALYSIS_PARAMETERS.map(parameter => (
-              <div className="form-field" key={parameter.key}>
-                <label htmlFor={`analysis-${parameter.key}`}>{parameter.id}. {parameter.name}</label>
-                {parameter.standard && <small className="field-hint">Standard: {parameter.standard}</small>}
-                <input
-                  id={`analysis-${parameter.key}`}
-                  className="form-input"
-                  value={draft.analysisResults[parameter.key] ?? ''}
-                  placeholder="Hasil analisa"
-                  onChange={event => update('analysisResults', { ...draft.analysisResults, [parameter.key]: event.target.value })}
-                />
-              </div>
-            ))}
+            {ANALYSIS_PARAMETERS.map(parameter => {
+              const isDisabled = parameter.monitoringOnly && draft.oqcType !== 'OQC Monitoring';
+              return (
+                <div className="form-field" key={parameter.key}>
+                  <label htmlFor={`analysis-${parameter.key}`}>{parameter.id}. {parameter.name}</label>
+                  {parameter.standard && <small className="field-hint">Standard: {parameter.standard}</small>}
+                  <input
+                    id={`analysis-${parameter.key}`}
+                    className={`form-input ${isDisabled ? 'readonly' : ''}`}
+                    value={isDisabled ? '-' : (draft.analysisResults[parameter.key] ?? '')}
+                    placeholder={isDisabled ? '' : 'Hasil analisa'}
+                    readOnly={isDisabled}
+                    disabled={isDisabled}
+                    onChange={isDisabled ? undefined : event => update('analysisResults', { ...draft.analysisResults, [parameter.key]: event.target.value })}
+                  />
+                </div>
+              );
+            })}
 
             <h2 className="form-section-title conclusion-title">Kesimpulan</h2>
             <div className="conclusion-segment">
