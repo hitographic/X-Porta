@@ -97,7 +97,7 @@ function App() {
       </main>
 
       <footer style={{ padding: '16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 11, borderTop: '1px solid var(--color-line)' }}>
-        © {new Date().getFullYear()} ver.1.0.0 by KursiHangat for Indofood
+        © {new Date().getFullYear()} ver.1.1.0 by KursiHangat for Indofood
       </footer>
     </div>
   );
