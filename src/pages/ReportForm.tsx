@@ -566,6 +566,37 @@ export default function ReportForm() {
             <h2 className="form-section-title">Organoleptik dan kimia</h2>
             {ANALYSIS_PARAMETERS.map(parameter => {
               const isDisabled = parameter.monitoringOnly && draft.oqcType !== 'OQC Monitoring';
+              const nameParts = parameter.name.includes(' / ') ? parameter.name.split(' / ') : null;
+              const storedValue = draft.analysisResults[parameter.key] ?? '';
+              const values = nameParts ? storedValue.split(' / ') : [];
+
+              if (nameParts && !isDisabled) {
+                return (
+                  <div className="form-field" key={parameter.key}>
+                    <label>{parameter.id}. {parameter.name}</label>
+                    {parameter.standard && <small className="field-hint">Standard: {parameter.standard}</small>}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {nameParts.map((part, i) => (
+                        <input
+                          key={i}
+                          className="form-input"
+                          type="text"
+                          style={{ flex: '1 1 0', minWidth: 60 }}
+                          value={values[i] ?? ''}
+                          placeholder={part.trim()}
+                          onChange={e => {
+                            const next = [...values];
+                            next[i] = e.target.value;
+                            while (next.length < nameParts.length) next.push('');
+                            update('analysisResults', { ...draft.analysisResults, [parameter.key]: next.join(' / ') });
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div className="form-field" key={parameter.key}>
                   <label htmlFor={`analysis-${parameter.key}`}>{parameter.id}. {parameter.name}</label>
@@ -573,7 +604,7 @@ export default function ReportForm() {
                   <input
                     id={`analysis-${parameter.key}`}
                     className={`form-input ${isDisabled ? 'readonly' : ''}`}
-                    value={isDisabled ? '-' : (draft.analysisResults[parameter.key] ?? '')}
+                    value={isDisabled ? '-' : storedValue}
                     placeholder={isDisabled ? '' : 'Hasil analisa'}
                     readOnly={isDisabled}
                     disabled={isDisabled}
