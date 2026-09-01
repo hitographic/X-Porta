@@ -61,9 +61,9 @@ export default function ReportForm() {
   const location = useLocation();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
-  const navigationState = location.state as Partial<Pick<ReportDraft, 'oqcType' | 'shift' | 'line'>> | null;
+  const navigationState = location.state as Partial<Pick<ReportDraft, 'oqcType' | 'bandedType' | 'shift' | 'line'>> | null;
 
-  const initialDraft = createEmptyReport(navigationState?.oqcType ?? 'OQC Regular');
+  const initialDraft = createEmptyReport(navigationState?.oqcType ?? 'OQC Regular', navigationState?.bandedType ?? 'Single');
   if (!isEditing && navigationState) {
     initialDraft.shift = navigationState.shift ?? initialDraft.shift;
     initialDraft.line = navigationState.line ?? initialDraft.line;
@@ -249,7 +249,7 @@ export default function ReportForm() {
         </button>
         <div className="report-form-heading">
           <h1>{isEditing ? 'Edit laporan' : 'Laporan baru'}</h1>
-          <p>{draft.oqcType} · Shift {draft.shift} · Line {draft.line}</p>
+          <p>{draft.oqcType} · {draft.bandedType} · Shift {draft.shift} · Line {draft.line}</p>
         </div>
         <button type="button" onClick={() => void save(false)} className="form-save-icon" disabled={saving} aria-label="Simpan draft">
           <Save size={19} />
@@ -285,6 +285,7 @@ export default function ReportForm() {
             <div className="metadata-card">
               <span>JENIS PEMERIKSAAN</span>
               <strong>{draft.oqcType}</strong>
+              <strong>{draft.bandedType}</strong>
               <div><strong>Shift {draft.shift}</strong><strong>Line {draft.line}</strong></div>
             </div>
 

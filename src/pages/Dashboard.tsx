@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole, ImagePlus } from 'lucide-react';
 import { apiService } from '../api/sync';
 import { exportReportPdf, exportReportsCsv } from '../utils/export';
-import { OQC_TYPES, type FinishedGoodsReport, type ReportAttachment, type OqcType } from '../types/report';
+import { OQC_TYPES, BANDED_TYPES, type FinishedGoodsReport, type ReportAttachment, type OqcType, type BandedType } from '../types/report';
 import { format } from 'date-fns';
 import { id as dateFnsId } from 'date-fns/locale';
 import PhotoViewerModal from '../components/PhotoViewerModal';
@@ -31,6 +31,7 @@ export default function Dashboard() {
   // Modal state
   const [showNewReport, setShowNewReport] = useState(false);
   const [oqcType, setOqcType] = useState<OqcType>('OQC Regular');
+  const [bandedType, setBandedType] = useState<BandedType>('Single');
   const [shift, setShift] = useState('');
   const [line, setLine] = useState('');
 
@@ -108,6 +109,7 @@ export default function Dashboard() {
 
   const openNewReport = () => {
     setOqcType('OQC Regular');
+    setBandedType('Single');
     setShift('');
     setLine('');
     setShowNewReport(true);
@@ -125,7 +127,7 @@ export default function Dashboard() {
       return;
     }
     setShowNewReport(false);
-    navigate('/reports/new', { state: { oqcType, shift: shiftNumber, line: lineNumber } });
+    navigate('/reports/new', { state: { oqcType, bandedType, shift: shiftNumber, line: lineNumber } });
   };
 
   const handleDelete = async () => {
@@ -362,6 +364,18 @@ export default function Dashboard() {
                     {oqcType === type && <div className="radio-dot"></div>}
                   </div>
                   <div className={`type-text ${oqcType === type ? 'selected' : ''}`}>{type}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="form-label" style={{ marginBottom: '7px', marginTop: '12px' }}>Tipe</div>
+            <div className="type-list">
+              {BANDED_TYPES.map(type => (
+                <div key={type} className={`type-option ${bandedType === type ? 'selected' : ''}`} onClick={() => setBandedType(type)}>
+                  <div className={`radio ${bandedType === type ? 'selected' : ''}`}>
+                    {bandedType === type && <div className="radio-dot"></div>}
+                  </div>
+                  <div className={`type-text ${bandedType === type ? 'selected' : ''}`}>{type}</div>
                 </div>
               ))}
             </div>

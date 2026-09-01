@@ -3,8 +3,10 @@ export type WorkflowStep = 1 | 2 | 3;
 export type Conclusion = '' | 'accepted' | 'rejected';
 export type SyncState = 'local' | 'synced' | 'modified';
 export type OqcType = 'OQC Regular' | 'OQC Sticker' | 'OQC Repack' | 'OQC Monitoring';
+export type BandedType = 'Single' | 'Banded';
 
 export const OQC_TYPES: OqcType[] = ['OQC Regular', 'OQC Sticker', 'OQC Repack', 'OQC Monitoring'];
+export const BANDED_TYPES: BandedType[] = ['Single', 'Banded'];
 
 export interface ReportAttachment {
   id: string;
@@ -40,6 +42,7 @@ export interface AnalysisParameter {
 export interface FinishedGoodsReport {
     id: string;
     oqcType: OqcType;
+    bandedType: BandedType;
     shift: number;
     line: number;
     reportNumber: string;
@@ -156,12 +159,15 @@ export function calculateAcceptRejectStatus(
     return rejects.map((count, index) => index < sampleSize ? (count > 0 ? 'R' : 'A') : '');
 }
 
-export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft {
+export function createEmptyReport(oqcType: OqcType = 'OQC Regular', bandedType: BandedType = 'Single'): ReportDraft {
     const today = new Date().toISOString().slice(0, 10);
     const uncheckedIds = new Set<number>();
     if (oqcType !== 'OQC Sticker') {
         uncheckedIds.add(7);
         uncheckedIds.add(18);
+    }
+    if (bandedType === 'Single') {
+        for (let i = 8; i <= 13; i++) uncheckedIds.add(i);
     }
     const rejectResults = Object.fromEntries(
         REJECT_CRITERIA.map((criterion) => [
@@ -173,6 +179,7 @@ export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft
 
     return {
         oqcType: 'OQC Regular',
+        bandedType: 'Single',
         shift: 1,
         line: 1,
         reportNumber: '',
