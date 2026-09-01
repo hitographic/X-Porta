@@ -102,7 +102,7 @@ export const REJECT_CRITERIA: RejectCriterion[] = [
     { id: 5, category: 'B', categoryLabel: 'FISIK', name: 'Kode produksi karton tidak standard', standard: 'Ada, benar dan jelas terbaca', sampleCount: 13 },
     { id: 6, category: 'B', categoryLabel: 'FISIK', name: 'Cetakan dan desain karton tidak standard', standard: 'Tidak misprint dan desain terbaru', sampleCount: 13 },
     { id: 7, category: 'B', categoryLabel: 'FISIK', name: 'Shipping mark / sticker karton tidak standard', standard: 'Ada, benar dan jelas terbaca', sampleCount: 13 },
-    { id: 8, category: 'B', categoryLabel: 'FISIK', name: 'Kemasan banded tidak standard', standard: 'Tidak robek / tidak belah, tidak ada cemaran', sampleCount: 13 },
+    { id: 8, category: 'B', categoryLabel: 'FISIK', name: 'Kemasan banded tidak standard', standard: 'Tidak robek/tidak belah, tidak ada', sampleCount: 13 },
     { id: 9, category: 'B', categoryLabel: 'FISIK', name: 'Isi per banded kurang', standard: 'Sesuai Kumpulan Standard', sampleCount: 13 },
     { id: 10, category: 'B', categoryLabel: 'FISIK', name: 'Cetakan & desain OPP S-Film tidak standard', standard: 'Tidak misprint dan desain terbaru', sampleCount: 13 },
     { id: 11, category: 'B', categoryLabel: 'FISIK', name: 'Kode produksi banded tidak standard', standard: 'Ada, benar dan jelas terbaca', sampleCount: 13 },
