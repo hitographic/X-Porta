@@ -8,6 +8,7 @@ const REQUEST_TIMEOUT = 30000;
 
 export interface AuthSession {
     nik: string;
+    name: string;
     loggedInAt: string;
 }
 
@@ -236,7 +237,7 @@ export const apiService = {
 
             if (!response.ok) throw new Error(`Gagal mengambil data user: HTTP ${response.status}`);
 
-            const payload = await response.json() as { schemaVersion?: number; users?: Array<{ nik: string; passwordHash: string; active: boolean }> };
+            const payload = await response.json() as { schemaVersion?: number; users?: Array<{ nik: string; passwordHash: string; active: boolean; name?: string }> };
             if (payload.schemaVersion !== 1 || !Array.isArray(payload.users)) {
                 throw new Error('Format data user dari server tidak didukung.');
             }
@@ -247,7 +248,7 @@ export const apiService = {
 
             if (!user) return null;
 
-            const session: AuthSession = { nik: user.nik, loggedInAt: new Date().toISOString() };
+            const session: AuthSession = { nik: user.nik, name: user.name || user.nik, loggedInAt: new Date().toISOString() };
             localStorage.setItem('x-porta-session', JSON.stringify(session));
             return session;
         } catch (err) {

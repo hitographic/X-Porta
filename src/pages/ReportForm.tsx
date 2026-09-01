@@ -31,8 +31,8 @@ const INFO_FIELDS_BOTTOM: { key: keyof ReportDraft; label: string; type?: 'numbe
   { key: 'aqlAcceptReject', label: 'A/R', readOnly: true },
   { key: 'halalPercentage', label: 'Pemeriksaan halal (%)', readOnly: true },
   { key: 'analysisDate', label: 'Tanggal analisa' },
-  { key: 'inspectorName', label: 'Nama pemeriksa' },
-  { key: 'approverName', label: 'Nama yang mengetahui' },
+  { key: 'inspectorName', label: 'Nama pemeriksa', readOnly: true },
+  { key: 'approverName', label: 'Nama yang mengetahui', readOnly: true },
 ];
 
 type FormTab = 'info' | 'criteria' | 'analysis';
@@ -80,6 +80,16 @@ export default function ReportForm() {
   const [error, setError] = useState('');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) return;
+    const session = apiService.getSession();
+    setDraft(current => ({
+      ...current,
+      inspectorName: session?.name || '',
+      approverName: 'Syahwanda A.N. / Nuridin',
+    }));
+  }, [isEditing]);
 
   useEffect(() => {
     if (!isEditing) return;
