@@ -100,7 +100,7 @@ export default function ReportDetail() {
             ['Jenis OQC', report.oqcType],
             ['Tanggal Analisa', report.analysisDate ? format(new Date(report.analysisDate), 'dd MMMM yyyy', { locale: dateFnsId }) : '-'],
             ['Shift / Line', `Shift ${report.shift} / Line ${report.line}`],
-            ['Kode Produksi', report.productionCode || '-'],
+            ['Kode Produksi', `${report.productionCode || ''} ${report.productionCodeDetail || ''} ${report.productionCode3 || ''}`.trim() || '-'],
             ['Negara', report.country || '-'],
             ['Distributor', report.distributor || '-'],
             ['Total Lot', `${report.totalLot || '-'} / ${report.totalLotPcs || '-'} pcs`],

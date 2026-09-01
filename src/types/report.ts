@@ -48,6 +48,7 @@ export interface FinishedGoodsReport {
     distributor: string;
     productionCode: string;
     productionCodeDetail: string;
+    productionCode3: string;
     locationCode: string;
     totalLot: string;
     totalLotPcs: string;
@@ -180,6 +181,7 @@ export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft
         distributor: '',
         productionCode: '',
         productionCodeDetail: '',
+        productionCode3: '',
         locationCode: '',
         totalLot: '',
         totalLotPcs: '',

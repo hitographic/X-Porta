@@ -16,7 +16,6 @@ function calculateAR(sampleSize: number): string {
 
 const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'number'; readOnly?: boolean }[] = [
   { key: 'reportNumber', label: 'Nomor laporan' },
-  { key: 'productionCode', label: 'Kode produksi' },
   { key: 'locationCode', label: 'Kode lokasi' },
 ];
 
@@ -335,6 +334,36 @@ export default function ReportForm() {
                 </div>
               );
             })}
+
+            <div className="form-field">
+              <label>Kode produksi</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  className="form-input"
+                  type="text"
+                  value={draft.productionCode}
+                  placeholder="Kolom 1"
+                  onChange={e => updateInfo('productionCode', e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <input
+                  className="form-input"
+                  type="text"
+                  value={draft.productionCodeDetail}
+                  placeholder="Kolom 2"
+                  onChange={e => updateInfo('productionCodeDetail', e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <input
+                  className="form-input"
+                  type="text"
+                  value={draft.productionCode3}
+                  placeholder="Kolom 3"
+                  onChange={e => updateInfo('productionCode3', e.target.value)}
+                  style={{ flex: 1 }}
+                />
+              </div>
+            </div>
 
             {INFO_FIELDS.map(field => {
               const isReadOnly = field.readOnly;
