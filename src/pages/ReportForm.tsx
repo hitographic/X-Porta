@@ -15,7 +15,6 @@ function calculateAR(sampleSize: number): string {
 }
 
 const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'number'; readOnly?: boolean }[] = [
-  { key: 'reportNumber', label: 'Nomor laporan' },
   { key: 'locationCode', label: 'Kode lokasi' },
 ];
 
@@ -287,6 +286,20 @@ export default function ReportForm() {
               <span>JENIS PEMERIKSAAN</span>
               <strong>{draft.oqcType}</strong>
               <div><strong>Shift {draft.shift}</strong><strong>Line {draft.line}</strong></div>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="field-reportNumber">Nomor laporan</label>
+              <input
+                id="field-reportNumber"
+                className="form-input"
+                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={draft.reportNumber}
+                placeholder="Masukkan nomor laporan"
+                onChange={e => updateInfo('reportNumber', e.target.value.replace(/[^0-9]/g, ''))}
+              />
             </div>
 
             {COMBOBOX_FIELDS.map(field => {
