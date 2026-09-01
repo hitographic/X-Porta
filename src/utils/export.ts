@@ -8,6 +8,7 @@ const escapeHtml = (value: unknown) => String(value ?? '')
     .replace(/"/g, String.fromCharCode(38, 113, 117, 111, 116, 59))
     .replace(/'/g, String.fromCharCode(38, 35, 51, 57, 59));
 const cell = (value: unknown, className = '') => `<td class="${className}">${escapeHtml(value)}</td>`;
+const rawCell = (html: string, className = '') => `<td class="${className}">${html}</td>`;
 
 function rejectRows(report: FinishedGoodsReport, activeSamples: number): string {
     let previousCategory = '';
@@ -36,13 +37,13 @@ function analysisRows(report: FinishedGoodsReport): string {
             const values = rawValue.split(' / ');
             const displayName = nameParts.map((part, i) => {
                 const val = (values[i] ?? '').trim();
-                return val ? part : `<s>${part}</s>`;
+                return val ? escapeHtml(part) : `<s>${escapeHtml(part)}</s>`;
             }).join(' / ');
             const displayValue = nameParts.map((_, i) => {
                 const val = (values[i] ?? '').trim();
                 return val || '-';
             }).join(' / ');
-            return `<tr>${cell(`${parameter.id}.`, 'number')}${cell(displayName, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(displayValue, 'analysis-value')}</tr>`;
+            return `<tr>${cell(`${parameter.id}.`, 'number')}${rawCell(displayName, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(displayValue, 'analysis-value')}</tr>`;
         }
 
         return `<tr>${cell(`${parameter.id}.`, 'number')}${cell(parameter.name, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(rawValue || '', 'analysis-value')}</tr>`;
