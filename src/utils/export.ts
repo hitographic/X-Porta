@@ -29,7 +29,7 @@ function rejectRows(report: FinishedGoodsReport, activeSamples: number): string 
 }
 
 function analysisRows(report: FinishedGoodsReport): string {
-    const percentIds = new Set([25, 26, 27, 28, 29, 31]);
+    const percentIds = new Set([27, 28, 29, 31]);
     const addPercent = (id: number, val: string) => {
         if (!val || val === '-') return val;
         return percentIds.has(id) ? `${val}%` : val;
