@@ -29,24 +29,31 @@ function rejectRows(report: FinishedGoodsReport, activeSamples: number): string 
 }
 
 function analysisRows(report: FinishedGoodsReport): string {
+    const percentIds = new Set([25, 26, 27, 28, 29, 31]);
+    const addPercent = (id: number, val: string) => {
+        if (!val || val === '-') return val;
+        return percentIds.has(id) ? `${val}%` : val;
+    };
+
     return ANALYSIS_PARAMETERS.map((parameter) => {
         const rawValue = report.analysisResults[parameter.key] || '';
         const nameParts = parameter.name.includes(' / ') ? parameter.name.split(' / ') : null;
 
         if (nameParts) {
             const values = rawValue.split(' / ');
+            const allEmpty = values.every(v => !(v ?? '').trim());
             const displayName = nameParts.map((part, i) => {
                 const val = (values[i] ?? '').trim();
                 return val ? escapeHtml(part) : `<s>${escapeHtml(part)}</s>`;
             }).join(' / ');
-            const displayValue = nameParts.map((_, i) => {
+            const displayValue = allEmpty ? '-' : nameParts.map((_, i) => {
                 const val = (values[i] ?? '').trim();
-                return val || '-';
+                return val ? addPercent(parameter.id, val) : '-';
             }).join(' / ');
             return `<tr>${cell(`${parameter.id}.`, 'number')}${rawCell(displayName, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(displayValue, 'analysis-value')}</tr>`;
         }
 
-        return `<tr>${cell(`${parameter.id}.`, 'number')}${cell(parameter.name, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(rawValue || '', 'analysis-value')}</tr>`;
+        return `<tr>${cell(`${parameter.id}.`, 'number')}${cell(parameter.name, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(addPercent(parameter.id, rawValue), 'analysis-value')}</tr>`;
     }).join('');
 }
 
