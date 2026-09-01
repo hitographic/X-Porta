@@ -63,7 +63,7 @@ export default function ReportForm() {
   const isEditing = Boolean(id);
   const navigationState = location.state as Partial<Pick<ReportDraft, 'oqcType' | 'bandedType' | 'shift' | 'line'>> | null;
 
-  const initialDraft = createEmptyReport(navigationState?.oqcType ?? 'OQC Regular', navigationState?.bandedType ?? 'Single');
+  const initialDraft = createEmptyReport(navigationState?.oqcType ?? 'OQC Regular');
   if (!isEditing && navigationState) {
     initialDraft.shift = navigationState.shift ?? initialDraft.shift;
     initialDraft.line = navigationState.line ?? initialDraft.line;
