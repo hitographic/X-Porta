@@ -66,8 +66,10 @@ export interface FinishedGoodsReport {
     conclusion: Conclusion;
     inspectorName: string;
     approverName: string;
+    analystName: string;
     rejectResults: Record<string, (boolean | null)[]>;
     analysisResults: Record<string, string>;
+    analysisStandards: Record<string, string>;
     createdAt: string;
     updatedAt: string;
     syncState: SyncState;
@@ -181,6 +183,7 @@ export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft
         ]),
     );
     const analysisResults = Object.fromEntries(ANALYSIS_PARAMETERS.map((parameter) => [parameter.key, '']));
+    const analysisStandards = Object.fromEntries(ANALYSIS_PARAMETERS.map((parameter) => [parameter.key, parameter.standard || '']));
 
     return {
         oqcType: 'OQC Regular',
@@ -208,8 +211,10 @@ export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft
         conclusion: '',
         inspectorName: '',
         approverName: '',
+        analystName: '',
         rejectResults,
         analysisResults,
+        analysisStandards,
         attachments: [],
     };
 }

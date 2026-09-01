@@ -564,6 +564,19 @@ export default function ReportForm() {
         {tab === 'analysis' && (
           <section>
             <h2 className="form-section-title">Organoleptik dan kimia</h2>
+            {draft.oqcType === 'OQC Monitoring' && (
+              <div className="form-field">
+                <label htmlFor="field-analystName">Nama Analis</label>
+                <input
+                  id="field-analystName"
+                  className="form-input"
+                  type="text"
+                  value={draft.analystName}
+                  placeholder="Masukkan nama analis"
+                  onChange={e => updateInfo('analystName', e.target.value)}
+                />
+              </div>
+            )}
             {ANALYSIS_PARAMETERS.map(parameter => {
               const isDisabled = parameter.monitoringOnly && draft.oqcType !== 'OQC Monitoring';
               const nameParts = parameter.name.includes(' / ') ? parameter.name.split(' / ') : null;

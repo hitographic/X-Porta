@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole, ImagePlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, RefreshCw, FileText, FilePlus2, SlidersHorizontal, FileDown, Trash2, LockKeyhole, ImagePlus, ClipboardList } from 'lucide-react';
 import { apiService } from '../api/sync';
 import { exportReportPdf, exportReportsCsv } from '../utils/export';
 import { OQC_TYPES, BANDED_TYPES, type FinishedGoodsReport, type ReportAttachment, type OqcType, type BandedType } from '../types/report';
 import { format } from 'date-fns';
 import { id as dateFnsId } from 'date-fns/locale';
 import PhotoViewerModal from '../components/PhotoViewerModal';
+import MonitoringAnalisaModal from '../components/MonitoringAnalisaModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -38,6 +39,9 @@ export default function Dashboard() {
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<FinishedGoodsReport | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Monitoring modal
+  const [monitoringReport, setMonitoringReport] = useState<FinishedGoodsReport | null>(null);
 
   // Photo viewer
   const [photoReport, setPhotoReport] = useState<FinishedGoodsReport | null>(null);
@@ -294,6 +298,19 @@ export default function Dashboard() {
                   <FileText size={16} color="var(--color-red)" />
                   <span style={{ color: 'var(--color-red)' }}>PDF</span>
                 </button>
+                {report.oqcType === 'OQC Monitoring' && (
+                  <button
+                    className="btn-secondary"
+                    style={{ borderColor: 'var(--color-line)', display: 'flex', alignItems: 'center', gap: 5 }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMonitoringReport(report);
+                    }}
+                  >
+                    <ClipboardList size={16} color="var(--color-blue)" />
+                    <span style={{ color: 'var(--color-blue)' }}>Input Hasil Analisa</span>
+                  </button>
+                )}
                 <button
                   className="btn-secondary"
                   style={{ borderColor: 'var(--color-line)', display: 'flex', alignItems: 'center', gap: 5 }}
@@ -429,6 +446,22 @@ export default function Dashboard() {
           attachments={photoReport.attachments ?? []}
           onClose={() => setPhotoReport(null)}
           onSave={(attachments) => handleSavePhotos(photoReport, attachments)}
+        />
+      )}
+
+      {monitoringReport && (
+        <MonitoringAnalisaModal
+          report={monitoringReport}
+          onClose={() => setMonitoringReport(null)}
+          onSave={async (updated) => {
+            const idx = reports.findIndex(r => r.id === updated.id);
+            if (idx < 0) return;
+            const next = [...reports];
+            next[idx] = updated;
+            setReports(next);
+            setMonitoringReport(null);
+            try { await apiService.uploadReports([updated]); } catch { /* silent */ }
+          }}
         />
       )}
 
