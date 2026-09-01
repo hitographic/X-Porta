@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, LockKeyhole, Save, X } from 'lucide-react';
 import { apiService } from '../api/sync';
-import type { MasterData } from '../api/sync';
 import { ANALYSIS_PARAMETERS, createEmptyReport, isRejected, REJECT_CRITERIA } from '../types/report';
 import type { FinishedGoodsReport, ReportDraft, WorkflowStep } from '../types/report';
+import { FLAVOUR_OPTIONS, COUNTRY_OPTIONS, DISTRIBUTOR_OPTIONS } from '../data/masterData';
 
 const SAMPLE_SIZE_OPTIONS = [2, 3, 5, 8, 13];
 
@@ -20,10 +20,10 @@ const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'number'; rea
   { key: 'locationCode', label: 'Kode lokasi' },
 ];
 
-const COMBOBOX_FIELDS: { key: keyof ReportDraft; label: string; masterKey: keyof MasterData }[] = [
-  { key: 'flavour', label: 'Flavour', masterKey: 'flavours' },
-  { key: 'country', label: 'Negara', masterKey: 'countries' },
-  { key: 'distributor', label: 'Distributor', masterKey: 'distributors' },
+const COMBOBOX_FIELDS: { key: keyof ReportDraft; label: string; options: string[] }[] = [
+  { key: 'flavour', label: 'Flavour', options: FLAVOUR_OPTIONS },
+  { key: 'country', label: 'Negara', options: COUNTRY_OPTIONS },
+  { key: 'distributor', label: 'Distributor', options: DISTRIBUTOR_OPTIONS },
 ];
 
 const INFO_FIELDS_BOTTOM: { key: keyof ReportDraft; label: string; type?: 'number'; readOnly?: boolean }[] = [
@@ -80,7 +80,6 @@ export default function ReportForm() {
   const [error, setError] = useState('');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [masterData, setMasterData] = useState<MasterData>({ flavours: [], countries: [], distributors: [] });
 
   useEffect(() => {
     if (!isEditing) return;
@@ -106,10 +105,6 @@ export default function ReportForm() {
 
     void fetchReport();
   }, [id, isEditing]);
-
-  useEffect(() => {
-    apiService.fetchMasterData().then(setMasterData).catch(() => {});
-  }, []);
 
   const update = <K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) => {
     setDraft(current => ({ ...current, [key]: value }));
@@ -286,7 +281,7 @@ export default function ReportForm() {
             </div>
 
             {COMBOBOX_FIELDS.map(field => {
-              const options = masterData[field.masterKey];
+              const options = field.options;
               const currentValue = String(draft[field.key] ?? '');
               const filteredOptions = currentValue
                 ? options.filter(opt => opt.toLowerCase().includes(currentValue.toLowerCase()))
