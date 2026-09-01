@@ -186,7 +186,7 @@ export function createEmptyReport(oqcType: OqcType = 'OQC Regular'): ReportDraft
     const analysisStandards = Object.fromEntries(ANALYSIS_PARAMETERS.map((parameter) => [parameter.key, parameter.standard || '']));
 
     return {
-        oqcType: 'OQC Regular',
+        oqcType,
         bandedType: 'Single',
         shift: 1,
         line: 1,

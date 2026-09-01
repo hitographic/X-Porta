@@ -67,6 +67,7 @@ export default function ReportForm() {
   if (!isEditing && navigationState) {
     initialDraft.shift = navigationState.shift ?? initialDraft.shift;
     initialDraft.line = navigationState.line ?? initialDraft.line;
+    initialDraft.bandedType = navigationState.bandedType ?? initialDraft.bandedType;
   }
 
   const [draft, setDraft] = useState<ReportDraft>(normalizeDraft(initialDraft));
