@@ -19,7 +19,7 @@ interface AttachmentUpload {
     base64: string;
 }
 
-function getEndpoint(action: 'download' | 'upload'): string {
+function getEndpoint(action: 'download' | 'upload' | 'master'): string {
     const url = new URL(ENDPOINT_URL);
     url.searchParams.set('action', action);
     url.searchParams.set('token', ACCESS_TOKEN);
@@ -66,6 +66,14 @@ function mergePhotosFromDrive(report: FinishedGoodsReport): FinishedGoodsReport 
     return { ...report, attachments: merged, rejectResults: normalizedRejectResults };
 }
 
+export interface MasterData {
+    flavours: string[];
+    countries: string[];
+    distributors: string[];
+}
+
+let masterDataCache: MasterData | null = null;
+
 export const apiService = {
     async fetchReports(): Promise<FinishedGoodsReport[]> {
         const controller = new AbortController();
@@ -86,6 +94,37 @@ export const apiService = {
             }
 
             return data.reports.map(mergePhotosFromDrive);
+        } catch (err) {
+            clearTimeout(timeout);
+            if (err instanceof DOMException && err.name === 'AbortError') {
+                throw new Error('Request timeout. Periksa koneksi internet dan coba lagi.');
+            }
+            throw err;
+        }
+    },
+
+    async fetchMasterData(): Promise<MasterData> {
+        if (masterDataCache) return masterDataCache;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+        try {
+            const response = await fetch(getEndpoint('master'), {
+                method: 'GET',
+                signal: controller.signal,
+            });
+            clearTimeout(timeout);
+
+            if (!response.ok) throw new Error(`Gagal mengambil data master: HTTP ${response.status}`);
+
+            const data = await response.json() as MasterData;
+            masterDataCache = {
+                flavours: Array.isArray(data.flavours) ? data.flavours : [],
+                countries: Array.isArray(data.countries) ? data.countries : [],
+                distributors: Array.isArray(data.distributors) ? data.distributors : [],
+            };
+            return masterDataCache;
         } catch (err) {
             clearTimeout(timeout);
             if (err instanceof DOMException && err.name === 'AbortError') {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronDown, ChevronRight, ChevronUp, LockKeyhole, Save, X } from 'lucide-react';
 import { apiService } from '../api/sync';
+import type { MasterData } from '../api/sync';
 import { ANALYSIS_PARAMETERS, createEmptyReport, isRejected, REJECT_CRITERIA } from '../types/report';
 import type { FinishedGoodsReport, ReportDraft, WorkflowStep } from '../types/report';
 
@@ -15,11 +16,14 @@ function calculateAR(sampleSize: number): string {
 
 const INFO_FIELDS: { key: keyof ReportDraft; label: string; type?: 'number'; readOnly?: boolean }[] = [
   { key: 'reportNumber', label: 'Nomor laporan' },
-  { key: 'flavour', label: 'Flavour' },
-  { key: 'country', label: 'Negara' },
-  { key: 'distributor', label: 'Distributor' },
   { key: 'productionCode', label: 'Kode produksi' },
   { key: 'locationCode', label: 'Kode lokasi' },
+];
+
+const COMBOBOX_FIELDS: { key: keyof ReportDraft; label: string; masterKey: keyof MasterData }[] = [
+  { key: 'flavour', label: 'Flavour', masterKey: 'flavours' },
+  { key: 'country', label: 'Negara', masterKey: 'countries' },
+  { key: 'distributor', label: 'Distributor', masterKey: 'distributors' },
 ];
 
 const INFO_FIELDS_BOTTOM: { key: keyof ReportDraft; label: string; type?: 'number'; readOnly?: boolean }[] = [
@@ -76,6 +80,7 @@ export default function ReportForm() {
   const [error, setError] = useState('');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [masterData, setMasterData] = useState<MasterData>({ flavours: [], countries: [], distributors: [] });
 
   useEffect(() => {
     if (!isEditing) return;
@@ -101,6 +106,10 @@ export default function ReportForm() {
 
     void fetchReport();
   }, [id, isEditing]);
+
+  useEffect(() => {
+    apiService.fetchMasterData().then(setMasterData).catch(() => {});
+  }, []);
 
   const update = <K extends keyof ReportDraft>(key: K, value: ReportDraft[K]) => {
     setDraft(current => ({ ...current, [key]: value }));
@@ -275,6 +284,52 @@ export default function ReportForm() {
               <strong>{draft.oqcType}</strong>
               <div><strong>Shift {draft.shift}</strong><strong>Line {draft.line}</strong></div>
             </div>
+
+            {COMBOBOX_FIELDS.map(field => {
+              const options = masterData[field.masterKey];
+              const currentValue = String(draft[field.key] ?? '');
+              const filteredOptions = currentValue
+                ? options.filter(opt => opt.toLowerCase().includes(currentValue.toLowerCase()))
+                : options;
+              const dropdownKey = `combo-${field.key}`;
+              const isOpen = openDropdown === dropdownKey;
+
+              return (
+                <div className="form-field" key={field.key}>
+                  <label htmlFor={`field-${field.key}`}>{field.label}</label>
+                  <div className="custom-dropdown">
+                    <input
+                      id={`field-${field.key}`}
+                      className="form-input"
+                      type="text"
+                      value={currentValue}
+                      placeholder={`Pilih atau ketik ${field.label.toLowerCase()}...`}
+                      autoComplete="off"
+                      onChange={e => {
+                        updateInfo(field.key, e.target.value);
+                        setOpenDropdown(dropdownKey);
+                      }}
+                      onFocus={() => setOpenDropdown(dropdownKey)}
+                      onClick={e => { e.stopPropagation(); setOpenDropdown(isOpen ? null : dropdownKey); }}
+                    />
+                    {isOpen && filteredOptions.length > 0 && (
+                      <div className="dropdown-menu">
+                        {filteredOptions.map(opt => (
+                          <button
+                            key={opt}
+                            type="button"
+                            className={`dropdown-item ${opt === currentValue ? 'active' : ''}`}
+                            onClick={() => { updateInfo(field.key, opt); setOpenDropdown(null); }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
 
             {INFO_FIELDS.map(field => {
               const isReadOnly = field.readOnly;
