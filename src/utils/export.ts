@@ -30,6 +30,7 @@ function rejectRows(report: FinishedGoodsReport, activeSamples: number): string 
 
 function analysisRows(report: FinishedGoodsReport): string {
     const percentIds = new Set([27, 28, 29, 31]);
+    const multiPartIds = new Set([28, 29, 30]);
     const addPercent = (id: number, val: string) => {
         if (!val || val === '-') return val;
         return percentIds.has(id) ? `${val}%` : val;
@@ -37,6 +38,7 @@ function analysisRows(report: FinishedGoodsReport): string {
 
     return ANALYSIS_PARAMETERS.map((parameter) => {
         const rawValue = report.analysisResults[parameter.key] || '';
+        const customStandard = report.analysisStandards?.[parameter.key] || parameter.standard || '';
         const nameParts = parameter.name.includes(' / ') ? parameter.name.split(' / ') : null;
 
         if (nameParts) {
@@ -50,10 +52,20 @@ function analysisRows(report: FinishedGoodsReport): string {
                 const val = (values[i] ?? '').trim();
                 return val ? addPercent(parameter.id, val) : '-';
             }).join(' / ');
-            return `<tr>${cell(`${parameter.id}.`, 'number')}${rawCell(displayName, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(displayValue, 'analysis-value')}</tr>`;
+
+            if (multiPartIds.has(parameter.id)) {
+                const stdParts = customStandard.split(' / ');
+                const displayStandard = nameParts.map((part, i) => {
+                    const std = (stdParts[i] ?? '').trim();
+                    return std ? escapeHtml(std) : `<s>${escapeHtml(part)}</s>`;
+                }).join(' / ');
+                return `<tr>${cell(`${parameter.id}.`, 'number')}${rawCell(displayName, 'criterion-name')}${rawCell(displayStandard, 'standard')}${cell(displayValue, 'analysis-value')}</tr>`;
+            }
+
+            return `<tr>${cell(`${parameter.id}.`, 'number')}${rawCell(displayName, 'criterion-name')}${cell(customStandard, 'standard')}${cell(displayValue, 'analysis-value')}</tr>`;
         }
 
-        return `<tr>${cell(`${parameter.id}.`, 'number')}${cell(parameter.name, 'criterion-name')}${cell(parameter.standard, 'standard')}${cell(addPercent(parameter.id, rawValue), 'analysis-value')}</tr>`;
+        return `<tr>${cell(`${parameter.id}.`, 'number')}${cell(parameter.name, 'criterion-name')}${cell(customStandard, 'standard')}${cell(addPercent(parameter.id, rawValue), 'analysis-value')}</tr>`;
     }).join('');
 }
 
