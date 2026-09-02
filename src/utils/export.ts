@@ -55,9 +55,9 @@ function analysisRows(report: FinishedGoodsReport): string {
 
             if (multiPartIds.has(parameter.id)) {
                 const stdParts = customStandard.split(' / ');
-                const displayStandard = nameParts.map((part, i) => {
+                const displayStandard = nameParts.map((_part, i) => {
                     const std = (stdParts[i] ?? '').trim();
-                    return std ? escapeHtml(std) : `<s>${escapeHtml(part)}</s>`;
+                    return std ? escapeHtml(std) : '-';
                 }).join(' / ');
                 return `<tr>${cell(`${parameter.id}.`, 'number')}${rawCell(displayName, 'criterion-name')}${rawCell(displayStandard, 'standard')}${cell(displayValue, 'analysis-value')}</tr>`;
             }

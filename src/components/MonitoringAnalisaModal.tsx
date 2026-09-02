@@ -58,12 +58,16 @@ export default function MonitoringAnalisaModal({ report, onClose, onSave }: Prop
 
             if (nameParts) {
               const stdParts = storedStandard.split(' / ');
+              const stdDisplay = nameParts.map((_part, i) => {
+                const std = (stdParts[i] ?? '').trim();
+                return std || '-';
+              }).join(' / ');
               return (
                 <div key={parameter.key} style={{ marginBottom: 12 }}>
                   <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>
                     {parameter.id}. {parameter.name}
                   </label>
-                  <div style={{ fontSize: 11, fontWeight: 500, marginBottom: 2, color: 'var(--color-muted)' }}>- Standard</div>
+                  <div style={{ fontSize: 11, fontWeight: 500, marginBottom: 2, color: 'var(--color-muted)' }}>- Standard: <span style={{ color: 'var(--color-ink)', fontWeight: 400 }}>{stdDisplay}</span></div>
                   <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
                     {nameParts.map((part, i) => (
                       <input
