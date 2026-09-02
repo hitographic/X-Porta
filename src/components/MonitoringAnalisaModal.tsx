@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { ANALYSIS_PARAMETERS } from '../types/report';
 import type { FinishedGoodsReport } from '../types/report';
 
-const MULTI_PART_IDS = new Set([24, 25, 26, 27, 28, 29, 30]);
+const MULTI_PART_IDS = new Set([24, 25, 26, 27, 28, 29, 30, 31]);
 const SINGLE_STD_IDS = new Set([25, 26]);
 
 interface Props {
