@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { ANALYSIS_PARAMETERS } from '../types/report';
 import type { FinishedGoodsReport } from '../types/report';
 
-const MULTI_PART_IDS = new Set([28, 29, 30]);
+const MULTI_PART_IDS = new Set([25, 26, 28, 29, 30]);
 
 interface Props {
   report: FinishedGoodsReport;
@@ -70,7 +70,7 @@ export default function MonitoringAnalisaModal({ report, onClose, onSave }: Prop
                         key={`std-${i}`}
                         className="form-input"
                         type="text"
-                        style={{ flex: 1, fontSize: 11, padding: '4px 6px' }}
+                        style={{ flex: 1, fontSize: 11, padding: '4px 6px', background: '#f0f4ff' }}
                         value={stdParts[i] ?? ''}
                         placeholder={part.trim()}
                         onChange={e => {
@@ -89,7 +89,7 @@ export default function MonitoringAnalisaModal({ report, onClose, onSave }: Prop
                         key={`hsl-${i}`}
                         className="form-input"
                         type="text"
-                        style={{ flex: 1, fontSize: 11, padding: '4px 6px' }}
+                        style={{ flex: 1, fontSize: 11, padding: '4px 6px', background: '#f0fff4' }}
                         value={values[i] ?? ''}
                         placeholder={part.trim()}
                         onChange={e => {
