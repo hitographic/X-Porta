@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { ANALYSIS_PARAMETERS } from '../types/report';
 import type { FinishedGoodsReport } from '../types/report';
 
-const MULTI_PART_IDS = new Set([25, 26, 28, 29, 30]);
+const MULTI_PART_IDS = new Set([24, 25, 26, 27, 28, 29, 30]);
+const SINGLE_STD_IDS = new Set([25, 26]);
 
 interface Props {
   report: FinishedGoodsReport;
@@ -57,35 +58,51 @@ export default function MonitoringAnalisaModal({ report, onClose, onSave }: Prop
             const values = nameParts ? storedValue.split(' / ') : [];
 
             if (nameParts) {
+              const isSingleStd = SINGLE_STD_IDS.has(parameter.id);
               const stdParts = storedStandard.split(' / ');
-              const stdDisplay = nameParts.map((_part, i) => {
-                const std = (stdParts[i] ?? '').trim();
-                return std || '-';
-              }).join(' / ');
+              const stdDisplay = isSingleStd
+                ? storedStandard || '-'
+                : nameParts.map((_part, i) => {
+                    const std = (stdParts[i] ?? '').trim();
+                    return std || '-';
+                  }).join(' / ');
               return (
                 <div key={parameter.key} style={{ marginBottom: 12 }}>
                   <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>
                     {parameter.id}. {parameter.name}
                   </label>
                   <div style={{ fontSize: 11, fontWeight: 500, marginBottom: 2, color: 'var(--color-muted)' }}>- Standard: <span style={{ color: 'var(--color-ink)', fontWeight: 400 }}>{stdDisplay}</span></div>
-                  <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-                    {nameParts.map((part, i) => (
+                  {isSingleStd ? (
+                    <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
                       <input
-                        key={`std-${i}`}
                         className="form-input"
                         type="text"
                         style={{ flex: 1, fontSize: 11, padding: '4px 6px', background: '#f0f4ff' }}
-                        value={stdParts[i] ?? ''}
-                        placeholder={part.trim()}
-                        onChange={e => {
-                          const next = [...stdParts];
-                          next[i] = e.target.value;
-                          while (next.length < nameParts.length) next.push('');
-                          updateStandard(parameter.key, next.join(' / '));
-                        }}
+                        value={storedStandard}
+                        placeholder="Standard"
+                        onChange={e => updateStandard(parameter.key, e.target.value)}
                       />
-                    ))}
-                  </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+                      {nameParts.map((part, i) => (
+                        <input
+                          key={`std-${i}`}
+                          className="form-input"
+                          type="text"
+                          style={{ flex: 1, fontSize: 11, padding: '4px 6px', background: '#f0f4ff' }}
+                          value={stdParts[i] ?? ''}
+                          placeholder={part.trim()}
+                          onChange={e => {
+                            const next = [...stdParts];
+                            next[i] = e.target.value;
+                            while (next.length < nameParts.length) next.push('');
+                            updateStandard(parameter.key, next.join(' / '));
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                   <div style={{ fontSize: 11, fontWeight: 500, marginBottom: 2, color: 'var(--color-muted)' }}>- Hasil</div>
                   <div style={{ display: 'flex', gap: 4 }}>
                     {nameParts.map((part, i) => (

@@ -128,8 +128,8 @@ export const REJECT_CRITERIA: RejectCriterion[] = [
 
 export const ANALYSIS_PARAMETERS: AnalysisParameter[] = [
     { id: 24, key: 'organoleptic_noodle', name: 'Organoleptik mi', standard: 'Min. 6' },
-    { id: 25, key: 'organoleptic_seasoning', name: 'Organoleptik bumbu / cabe / solid ingredient / bawang goreng *', standard: '', monitoringOnly: true },
-    { id: 26, key: 'organoleptic_oil', name: 'Organoleptik minyak bumbu / kecap / sambal pasta *', standard: '', monitoringOnly: true },
+    { id: 25, key: 'organoleptic_seasoning', name: 'Organoleptik bumbu / cabe / solid ingredient / bawang goreng *', standard: 'Min. 6', monitoringOnly: true },
+    { id: 26, key: 'organoleptic_oil', name: 'Organoleptik minyak bumbu / kecap / sambal pasta *', standard: 'Min. 6', monitoringOnly: true },
     { id: 27, key: 'moisture_noodle', name: 'Kadar air mi', standard: '' },
     { id: 28, key: 'moisture_seasoning', name: 'Kadar air bumbu / cabe / solid ingredient / bawang goreng *', standard: '', monitoringOnly: true },
     { id: 29, key: 'moisture_oil', name: 'Kadar air minyak bumbu / kecap / sambal pasta *', standard: '', monitoringOnly: true },
