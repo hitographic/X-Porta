@@ -61,14 +61,20 @@ export default function ReportForm() {
   const location = useLocation();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
-  const navigationState = location.state as Partial<Pick<ReportDraft, 'oqcType' | 'bandedType' | 'shift' | 'line'>> | null;
+  const navigationState = location.state as Partial<Pick<ReportDraft, 'oqcType' | 'bandedType' | 'shift' | 'line' | 'reportNumber'>> | null;
 
   const initialDraft = createEmptyReport(navigationState?.oqcType ?? 'OQC Regular');
   if (!isEditing && navigationState) {
     initialDraft.shift = navigationState.shift ?? initialDraft.shift;
     initialDraft.line = navigationState.line ?? initialDraft.line;
     initialDraft.bandedType = navigationState.bandedType ?? initialDraft.bandedType;
+    if (typeof navigationState.reportNumber === 'string' && navigationState.reportNumber.trim()) {
+      initialDraft.reportNumber = navigationState.reportNumber.trim().replace(/[^0-9]/g, '');
+    }
   }
+  // No Laporan sudah dipilih di modal "Laporan Baru", jadi sembunyikan input di halaman new
+  // (tetap tampilkan input saat edit atau saat user akses langsung tanpa lewat modal).
+  const hideReportNumberInput = !isEditing && Boolean(navigationState?.reportNumber?.trim());
 
   const [draft, setDraft] = useState<ReportDraft>(normalizeDraft(initialDraft));
   const [original, setOriginal] = useState<FinishedGoodsReport | null>(null);
@@ -212,12 +218,46 @@ export default function ReportForm() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
+    const normalizedNo = (draft.reportNumber || '').trim().replace(/^0+(?=\d)/, '');
+    if (!normalizedNo || !/^[0-9]+$/.test(normalizedNo)) {
+      setError('Nomor laporan harus diisi dengan angka. Kembali dan buat ulang via tombol "Laporan baru".');
+      setTab('info');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
     setSaving(true);
     setError('');
+
+    // Validasi lapis kedua: No + OQC tidak boleh sama dalam tahun analisa yang sama
+    try {
+      const existing = await apiService.fetchReports();
+      const draftYear = new Date(draft.analysisDate || new Date().toISOString()).getFullYear();
+      const duplicate = existing.find(r => {
+        if (original && r.id === original.id) return false;
+        const existingNo = (r.reportNumber || '').trim().replace(/^0+(?=\d)/, '');
+        if (existingNo !== normalizedNo) return false;
+        if (r.oqcType !== draft.oqcType) return false;
+        const raw = r.analysisDate || r.createdAt || '';
+        const y = new Date(raw).getFullYear();
+        return y === draftYear;
+      });
+      if (duplicate) {
+        const msg = `No. laporan ${normalizedNo} dengan ${draft.oqcType} sudah ada pada tahun ${draftYear}. Ubah nomor laporan dan jenis OQC.`;
+        setError(msg);
+        alert(msg);
+        setSaving(false);
+        setTab('info');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    } catch {
+      // Abaikan gagal validasi duplikat (misal offline), lanjutkan simpan
+    }
     const now = new Date().toISOString();
     const reportToSave: FinishedGoodsReport = {
       ...draft,
+      reportNumber: normalizedNo,
       status: completed ? 'completed' : 'draft',
       workflowStep: draft.workflowStep ?? (completed ? 3 : 1),
       id: original?.id ?? crypto.randomUUID(),
@@ -250,7 +290,7 @@ export default function ReportForm() {
         </button>
         <div className="report-form-heading">
           <h1>{isEditing ? 'Edit laporan' : 'Laporan baru'}</h1>
-          <p>{draft.oqcType} · {draft.bandedType} · Shift {draft.shift} · Line {draft.line}</p>
+          <p>{draft.reportNumber?.trim() ? `No. ${draft.reportNumber.trim()} · ` : ''}{draft.oqcType} · {draft.bandedType} · Shift {draft.shift} · Line {draft.line}</p>
         </div>
         <button type="button" onClick={() => void save(false)} className="form-save-icon" disabled={saving} aria-label="Simpan draft">
           <Save size={19} />
@@ -285,11 +325,13 @@ export default function ReportForm() {
             <h2 className="form-section-title">Informasi laporan</h2>
             <div className="metadata-card">
               <span>JENIS PEMERIKSAAN</span>
+              {draft.reportNumber?.trim() ? <strong>No. {draft.reportNumber.trim()}</strong> : null}
               <strong>{draft.oqcType}</strong>
               <strong>{draft.bandedType}</strong>
               <div><strong>Shift {draft.shift}</strong><strong>Line {draft.line}</strong></div>
             </div>
 
+            {!hideReportNumberInput && (
             <div className="form-field">
               <label htmlFor="field-reportNumber">Nomor laporan</label>
               <input
@@ -303,6 +345,7 @@ export default function ReportForm() {
                 onChange={e => updateInfo('reportNumber', e.target.value.replace(/[^0-9]/g, ''))}
               />
             </div>
+            )}
 
             {COMBOBOX_FIELDS.map(field => {
               const options = field.options;

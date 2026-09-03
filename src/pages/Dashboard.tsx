@@ -31,6 +31,8 @@ export default function Dashboard() {
 
   // Modal state
   const [showNewReport, setShowNewReport] = useState(false);
+  const [reportNumber, setReportNumber] = useState('');
+  const [duplicateError, setDuplicateError] = useState('');
   const [oqcType, setOqcType] = useState<OqcType>('OQC Regular');
   const [bandedType, setBandedType] = useState<BandedType>('Single');
   const [shift, setShift] = useState('');
@@ -46,12 +48,29 @@ export default function Dashboard() {
   // Photo viewer
   const [photoReport, setPhotoReport] = useState<FinishedGoodsReport | null>(null);
 
+  const getReportNumberValue = (r: FinishedGoodsReport): number => {
+    const n = parseInt((r.reportNumber || '').trim(), 10);
+    return Number.isNaN(n) ? -1 : n;
+  };
+
+  const getReportYear = (r: FinishedGoodsReport): number => {
+    const raw = r.analysisDate || r.createdAt || '';
+    const y = new Date(raw).getFullYear();
+    return Number.isNaN(y) ? new Date().getFullYear() : y;
+  };
+
+  const normalizeReportNumber = (value: string): string =>
+    (value || '').trim().replace(/^0+(?=\d)/, '');
+
   const loadData = async () => {
     setLoading(true);
     setError('');
     try {
       const data = await apiService.fetchReports();
-      data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      data.sort((a, b) =>
+        getReportNumberValue(b) - getReportNumberValue(a) ||
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
       setReports(data);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Gagal mengambil data dari server.');
@@ -76,7 +95,7 @@ export default function Dashboard() {
 
   const filteredReports = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return reports.filter(r => {
+    const result = reports.filter(r => {
       const matchSearch = !query || [
         r.flavour,
         r.productionCode,
@@ -95,6 +114,12 @@ export default function Dashboard() {
 
       return matchSearch && matchOqc && matchShift && matchLine && matchStatus && matchYear && matchDateFrom && matchDateTo;
     });
+    // Selalu sort dari No Laporan terbesar
+    result.sort((a, b) =>
+      getReportNumberValue(b) - getReportNumberValue(a) ||
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    return result;
   }, [reports, search, filterOqc, filterShift, filterLine, filterStatus, filterYear, filterDateFrom, filterDateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filteredReports.length / pageSize));
@@ -112,6 +137,8 @@ export default function Dashboard() {
   }, [page, totalPages]);
 
   const openNewReport = () => {
+    setReportNumber('');
+    setDuplicateError('');
     setOqcType('OQC Regular');
     setBandedType('Single');
     setShift('');
@@ -120,6 +147,13 @@ export default function Dashboard() {
   };
 
   const confirmNewReport = () => {
+    const normalizedNo = normalizeReportNumber(reportNumber);
+    if (!normalizedNo || !/^[0-9]+$/.test(normalizedNo)) {
+      const msg = 'Nomor laporan harus diisi dengan angka.';
+      setDuplicateError(msg);
+      alert(msg);
+      return;
+    }
     const shiftNumber = Number(shift);
     const lineNumber = Number(line);
     if (!Number.isInteger(shiftNumber) || shiftNumber < 1 || shiftNumber > 3) {
@@ -130,8 +164,22 @@ export default function Dashboard() {
       alert('Line harus berupa angka 1 sampai 33.');
       return;
     }
+    // Rules: No laporan + jenis OQC tidak boleh sama dalam satu tahun yang sama
+    const currentYear = new Date().getFullYear();
+    const duplicate = reports.find(r =>
+      normalizeReportNumber(r.reportNumber) === normalizedNo &&
+      r.oqcType === oqcType &&
+      getReportYear(r) === currentYear,
+    );
+    if (duplicate) {
+      const msg = `No. laporan ${normalizedNo} dengan ${oqcType} sudah ada pada tahun ${currentYear}. Ubah nomor laporan dan jenis OQC.`;
+      setDuplicateError(msg);
+      alert(msg);
+      return;
+    }
+    setDuplicateError('');
     setShowNewReport(false);
-    navigate('/reports/new', { state: { oqcType, bandedType, shift: shiftNumber, line: lineNumber } });
+    navigate('/reports/new', { state: { oqcType, bandedType, shift: shiftNumber, line: lineNumber, reportNumber: normalizedNo } });
   };
 
   const handleDelete = async () => {
@@ -268,13 +316,14 @@ export default function Dashboard() {
           paginatedReports.map(report => (
             <div key={report.id} className="report-item">
               <div className="report-top">
-                <div style={{ flex: 1 }}>
-                  <div className="report-name">{report.flavour || 'Flavour belum diisi'}</div>
-                  <div className="report-code">{report.productionCode || 'Tanpa kode produksi'}</div>
-                </div>
+                <div className="report-number-badge">No.{report.reportNumber?.trim() || '-'}</div>
                 <div className={`badge ${report.status === 'completed' ? 'badge-done' : 'badge-draft'}`}>
                   <span className="badge-text">{report.status === 'completed' ? 'SELESAI' : 'DRAFT'}</span>
                 </div>
+              </div>
+              <div style={{ marginTop: '10px' }}>
+                <div className="report-name">{report.flavour || 'Flavour belum diisi'}</div>
+                <div className="report-code">{report.productionCode || 'Tanpa kode produksi'}</div>
               </div>
               <div className="meta">{report.oqcType} · Shift {report.shift} · Line {report.line}</div>
               <div className="detail-text">
@@ -372,6 +421,26 @@ export default function Dashboard() {
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-title">Laporan Baru</div>
             <div className="modal-description">Pilih jenis pemeriksaan dan lokasi produksi.</div>
+
+            {duplicateError && (
+              <div style={{ padding: '12px', background: 'var(--color-red)', color: 'var(--color-white)', borderRadius: '6px', marginBottom: '14px', fontSize: '12px', fontWeight: 700, lineHeight: '18px' }}>
+                {duplicateError}
+              </div>
+            )}
+
+            <div className="form-label" style={{ marginBottom: '7px' }}>No Laporan</div>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="form-input"
+              placeholder="Contoh: 12"
+              value={reportNumber}
+              onChange={(e) => {
+                setReportNumber(e.target.value.replace(/[^0-9]/g, '').slice(0, 6));
+                if (duplicateError) setDuplicateError('');
+              }}
+              style={{ marginBottom: '14px' }}
+            />
 
             <div className="form-label" style={{ marginBottom: '7px' }}>Jenis OQC</div>
             <div className="type-list">

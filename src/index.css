@@ -289,7 +289,19 @@ body {
 .report-top {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.report-number-badge {
+  background-color: var(--color-green);
+  color: var(--color-white);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
 }
 
 .report-name {
