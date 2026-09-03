@@ -108,8 +108,21 @@ export function exportReportPdf(report: FinishedGoodsReport): void {
         const printWindow = window.open('', '_blank');
         if (!printWindow) throw new Error('Browser memblokir jendela cetak. Izinkan pop-up untuk situs ini.');
 
+        const parts = [
+            report.reportNumber || '0',
+            report.flavour || '-',
+            report.country || '-',
+            report.distributor || '-',
+            report.oqcType || '-',
+            `Shift ${report.shift || '-'}`,
+            `L ${report.line || '-'}`,
+            report.analysisDate || '-'
+        ];
+        const fileName = parts.join(' - ');
+
         printWindow.document.write(html);
         printWindow.document.close();
+        printWindow.document.title = fileName;
 
         setTimeout(() => {
             printWindow.focus();
